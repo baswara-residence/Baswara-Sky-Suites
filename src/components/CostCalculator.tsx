@@ -237,8 +237,8 @@ No. Rekening   : ${OFFICIAL_BANK_INFO.accountNumber}
 
 DISETUJUI OLEH:
 PT Baswara Mangkubumi Residence
-CEO: Marcelinus Chitraditya Lokananta Prabaswara
-GM Operasional: Julian Andries
+CEO: Chitraditya Prabaswara
+Head of Leasing: Natasha Wijaya
 ========================================================`;
 
     navigator.clipboard.writeText(invoiceText);

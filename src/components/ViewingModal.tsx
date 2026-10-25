@@ -593,8 +593,8 @@ Atas Nama     : ${OFFICIAL_BANK_INFO.accountHolder}
 *Harap mencantumkan nomor invoice ${inv.invoiceNumber} pada berita transfer.
 ------------------------------------------------------------
 Mengetahui & Menyetujui:
-Marcelinus Chitraditya Lokananta Prabaswara (CEO PT Baswara Mangkubumi Residence)
-Julian Andries (General Manager Operasional)`;
+Chitraditya Prabaswara (CEO PT Baswara Mangkubumi Residence)
+Natasha Wijaya (Head of Leasing)`;
 
     navigator.clipboard.writeText(text);
     setInvoiceCopied(true);

@@ -7,7 +7,7 @@ export interface StaffMember {
 
 export const STAFF_MEMBERS: StaffMember[] = [
   {
-    name: 'Marcelinus Chitraditya Lokananta Prabaswara',
+    name: 'Chitraditya Prabaswara',
     role: 'Chief Executive Officer (CEO)',
     desc: 'Memimpin visi strategis, keunggulan tata kelola, dan standar mutu tertinggi hunian vertikal terpadu.',
     category: 'executive',

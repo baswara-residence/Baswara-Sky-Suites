@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
@@ -135,18 +136,33 @@ Kembalikan respon strictly dalam format JSON yang valid.`;
   });
 
   // Development vs Production serving
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+  const distDir = path.resolve(__dirname, 'dist');
+  const distIndex = path.resolve(distDir, 'index.html');
+  const hasDist = fs.existsSync(distIndex);
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (!isDev && hasDist) {
+    // Production mode: Serve pre-built static assets from dist/
+    console.log('Serving production static build from:', distDir);
+    app.use(express.static(distDir, { maxAge: '1h' }));
     app.get('*', (_req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(distIndex);
     });
   } else {
+    // Development mode: Mount Vite dev server in middleware mode
+    console.log('Starting Vite development middleware');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   }
+
+  // Global server error fallback
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('Unhandled server error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Baswara Sky Suites server active at http://0.0.0.0:${PORT}`);
