@@ -1,0 +1,6 @@
+{
+  "summary":  "Implementasi arsitektur per-page (screen-by-screen) untuk Baswara Sky Suites, meniadakan vertical scrolling panjang dan menyediakan navigasi halaman diskret, floating dots rail, bottom controller bar, serta keyboard arrows.",
+  "updatedAt":  "2026-10-24T11:16:04.997278820Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

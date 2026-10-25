@@ -1,0 +1,8 @@
+{
+  "name": "Baswara Sky Suites",
+  "description": "Higher Living, Bigger Dreams. Luxury vertical living residence portal with unit explorer, cost calculator, and multimodal interior compatibility scanner.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
