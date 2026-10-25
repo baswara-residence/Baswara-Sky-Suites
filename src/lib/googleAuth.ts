@@ -64,6 +64,11 @@ export const googleSignIn = async (): Promise<SignInResponse> => {
     }
 
     cachedAccessToken = credential.accessToken;
+    if (result.user?.email) {
+      try {
+        await saveAdminToken(cachedAccessToken, result.user.email);
+      } catch {}
+    }
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     const code = error?.code || '';
@@ -95,10 +100,59 @@ export const googleSignIn = async (): Promise<SignInResponse> => {
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
-  return cachedAccessToken;
+  if (cachedAccessToken) {
+    return cachedAccessToken;
+  }
+
+  // Check localStorage for administrator token
+  try {
+    const local = localStorage.getItem('baswara_admin_google_token');
+    if (local) {
+      cachedAccessToken = local;
+      return local;
+    }
+  } catch {}
+
+  // Check backend server session
+  try {
+    const res = await fetch('/api/admin/google-token');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.accessToken) {
+        cachedAccessToken = data.accessToken;
+        try {
+          localStorage.setItem('baswara_admin_google_token', data.accessToken);
+        } catch {}
+        return data.accessToken;
+      }
+    }
+  } catch {}
+
+  return null;
+};
+
+export const getAdminAccessToken = getAccessToken;
+
+export const saveAdminToken = async (token: string, email: string = 'feel.ix.ee@gmail.com') => {
+  cachedAccessToken = token;
+  try {
+    localStorage.setItem('baswara_admin_google_token', token);
+    localStorage.setItem('baswara_admin_google_email', email);
+  } catch {}
+
+  try {
+    await fetch('/api/admin/google-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: token, email }),
+    });
+  } catch {}
 };
 
 export const logout = async () => {
   await auth.signOut();
   cachedAccessToken = null;
+  try {
+    localStorage.removeItem('baswara_admin_google_token');
+  } catch {}
 };

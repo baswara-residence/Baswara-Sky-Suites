@@ -518,19 +518,10 @@ GM Operasional: Julian Andries
                 <button
                   type="button"
                   onClick={handleCopyInvoice}
-                  className="px-3 py-1.5 border border-slate-700 hover:border-slate-500 text-slate-300 text-xs font-mono flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 border border-slate-700 hover:border-slate-500 text-slate-300 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Copy size={13} />
                   <span>{invoiceCopied ? 'Tersalin!' : 'Salin Teks Invoice'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-mono flex items-center gap-1.5 transition-colors"
-                >
-                  <Printer size={13} />
-                  <span>Cetak / PDF</span>
                 </button>
               </div>
             </div>
@@ -716,7 +707,7 @@ GM Operasional: Julian Andries
                       Menyetujui,
                     </div>
                     <div className="font-serif text-white font-medium text-sm">
-                      M. C. L. Prabaswara
+                      Chitraditya Prabaswara
                     </div>
                     <div className="text-[11px] text-[#D4AF37] font-mono">
                       CEO
@@ -728,13 +719,13 @@ GM Operasional: Julian Andries
 
                   <div className="text-right">
                     <div className="text-[10px] font-mono uppercase text-slate-400 mb-6">
-                      Otorisasi Billing,
+                      Otorisasi Leasing,
                     </div>
                     <div className="font-serif text-white font-medium text-sm">
-                      Julian Andries
+                      Natasha Wijaya
                     </div>
                     <div className="text-[11px] text-[#D4AF37] font-mono">
-                      GM Operasional
+                      Head of Leasing
                     </div>
                     <div className="text-[10px] text-slate-400">
                       Leasing Division

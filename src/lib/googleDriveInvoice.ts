@@ -464,14 +464,14 @@ export function generateInvoiceHtml(
     <div class="signatures">
       <div>
         <div class="sig-label">Mengetahui & Menyetujui,</div>
-        <div class="sig-name">Marcelinus Chitraditya Lokananta Prabaswara</div>
+        <div class="sig-name">Chitraditya Prabaswara</div>
         <div class="sig-role">Chief Executive Officer (CEO)</div>
         <div class="sig-corp">PT Baswara Mangkubumi Residence</div>
       </div>
       <div style="text-align: right;">
-        <div class="sig-label">Otorisasi Operasional & Billing,</div>
-        <div class="sig-name">Julian Andries</div>
-        <div class="sig-role">General Manager Operasional</div>
+        <div class="sig-label">Otorisasi Leasing,</div>
+        <div class="sig-name">Natasha Wijaya</div>
+        <div class="sig-role">Head of Leasing</div>
         <div class="sig-corp">Baswara Sky Suites Leasing Division</div>
       </div>
     </div>
@@ -481,8 +481,205 @@ export function generateInvoiceHtml(
 </html>`;
 }
 
+export interface SaveInvoiceToDriveParams {
+  accessToken: string;
+  invoice: QuoteData;
+  tenantName: string;
+  tenantXHandle: string;
+  isLivingAlone: boolean;
+  coTenantsCount: number;
+  jpegBlob?: Blob | null;
+}
+
+export interface DriveInvoiceResult {
+  success: boolean;
+  folderId?: string;
+  folderWebViewLink?: string;
+  fileId?: string;
+  fileWebViewLink?: string;
+  fileName?: string;
+  error?: string;
+}
+
 /**
- * Saves or updates the invoice into the single designated Google Drive folder.
+ * Fallback generator that creates a high-resolution JPG Blob if html2canvas is unavailable.
+ */
+async function createFallbackInvoiceJpegBlob(
+  invoice: QuoteData,
+  tenantName: string,
+  tenantXHandle: string
+): Promise<Blob> {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1200;
+  canvas.height = 1600;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Canvas 2D context not available');
+  }
+
+  // Background
+  ctx.fillStyle = '#0B0F19';
+  ctx.fillRect(0, 0, 1200, 1600);
+
+  // Outer gold border
+  ctx.strokeStyle = '#D4AF37';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(40, 40, 1120, 1520);
+
+  // Inner thin border
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(50, 50, 1100, 1500);
+
+  // Title
+  ctx.fillStyle = '#F3E5AB';
+  ctx.font = 'bold 36px serif';
+  ctx.fillText('THE BASWARA SKY SUITES', 80, 120);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat 10310', 80, 155);
+
+  // Invoice Number & Dates
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText(`NO: ${invoice.invoiceNumber}`, 780, 120);
+
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(`Tanggal Terbit: ${invoice.issueDate}`, 780, 150);
+  ctx.fillStyle = '#F59E0B';
+  ctx.fillText(`Jatuh Tempo: ${invoice.dueDate} (7 Hari)`, 780, 178);
+
+  // Divider line
+  ctx.strokeStyle = '#1E293B';
+  ctx.beginPath();
+  ctx.moveTo(80, 210);
+  ctx.lineTo(1120, 210);
+  ctx.stroke();
+
+  // Tenant Info
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = '14px monospace';
+  ctx.fillText('DITAGIHKAN KEPADA:', 80, 250);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 24px serif';
+  ctx.fillText(tenantName, 80, 285);
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = '16px monospace';
+  ctx.fillText(tenantXHandle, 80, 315);
+
+  // Unit Info
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = '14px monospace';
+  ctx.fillText('SPESIFIKASI UNIT & SEWA:', 650, 250);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 20px serif';
+  ctx.fillText(`${invoice.unit.name} · Tower ${invoice.unit.tower}`, 650, 285);
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(`Masa Sewa: ${invoice.tenureMonths} Bulan`, 650, 315);
+
+  // Divider line
+  ctx.strokeStyle = '#1E293B';
+  ctx.beginPath();
+  ctx.moveTo(80, 360);
+  ctx.lineTo(1120, 360);
+  ctx.stroke();
+
+  // Table header
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(80, 390, 1040, 50);
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = 'bold 15px monospace';
+  ctx.fillText('DESKRIPSI TAGIHAN', 100, 422);
+  ctx.fillText('TOTAL (IDR)', 950, 422);
+
+  // Table items
+  const formatIdr = (val: number) =>
+    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+
+  let y = 480;
+  const items = [
+    { name: `Sewa Pokok Unit (${invoice.tenureMonths} Bulan)`, val: formatIdr(invoice.totalRentForTenure || (invoice.discountedMonthly * invoice.tenureMonths)) },
+    { name: 'Pajak Pertambahan Nilai (PPN 11%)', val: formatIdr(invoice.ppnAmount || Math.round((invoice.totalRentForTenure || 0) * 0.11)) },
+    { name: 'Bea Materai & Administrasi Legalisasi Dokumen', val: formatIdr(invoice.materaiFee || 10000) },
+    { name: 'Security Deposit Jaminan (100% Refundable · 2 Bln Sewa Pokok)', val: formatIdr(invoice.securityDeposit) },
+  ];
+
+  items.forEach((it) => {
+    ctx.fillStyle = '#E2E8F0';
+    ctx.font = '18px sans-serif';
+    ctx.fillText(it.name, 100, y);
+    ctx.font = 'bold 18px monospace';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(it.val, 920, y);
+    y += 55;
+  });
+
+  // Grand Total box
+  ctx.fillStyle = 'rgba(212, 175, 55, 0.15)';
+  ctx.fillRect(80, 720, 1040, 80);
+  ctx.strokeStyle = '#D4AF37';
+  ctx.strokeRect(80, 720, 1040, 80);
+  ctx.fillStyle = '#F3E5AB';
+  ctx.font = 'bold 18px monospace';
+  ctx.fillText('TOTAL TAGIHAN PEMBAYARAN:', 110, 768);
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = 'bold 28px monospace';
+  ctx.fillText(formatIdr(invoice.initialTotalUpfront), 800, 770);
+
+  // Bank Info
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(80, 840, 1040, 150);
+  ctx.strokeStyle = '#1E293B';
+  ctx.strokeRect(80, 840, 1040, 150);
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = 'bold 15px monospace';
+  ctx.fillText('REKENING RESMI PEMBAYARAN:', 110, 875);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '17px sans-serif';
+  ctx.fillText(`Bank: ${OFFICIAL_BANK_INFO.bankName}   |   Atas Nama: ${OFFICIAL_BANK_INFO.accountHolder}`, 110, 915);
+  ctx.font = 'bold 22px monospace';
+  ctx.fillStyle = '#F3E5AB';
+  ctx.fillText(`No. Rekening: ${OFFICIAL_BANK_INFO.accountNumber}`, 110, 955);
+
+  // Signatures
+  const sigY = 1350;
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '14px monospace';
+  ctx.fillText('MENGETAHUI & MENYETUJUI,', 100, sigY);
+  ctx.fillText('OTORISASI LEASING,', 780, sigY);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 22px serif';
+  ctx.fillText('Chitraditya Prabaswara', 100, sigY + 50);
+  ctx.fillText('Natasha Wijaya', 780, sigY + 50);
+
+  ctx.fillStyle = '#D4AF37';
+  ctx.font = '15px monospace';
+  ctx.fillText('Chief Executive Officer (CEO)', 100, sigY + 75);
+  ctx.fillText('Head of Leasing', 780, sigY + 75);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('PT Baswara Mangkubumi Residence', 100, sigY + 100);
+  ctx.fillText('Baswara Sky Suites Leasing Division', 780, sigY + 100);
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Gagal mengonversi canvas ke JPG Blob'));
+      },
+      'image/jpeg',
+      0.95
+    );
+  });
+}
+
+/**
+ * Saves or updates the invoice into Google Drive as a JPG file.
  */
 export async function saveInvoiceToDriveFolder({
   accessToken,
@@ -491,25 +688,27 @@ export async function saveInvoiceToDriveFolder({
   tenantXHandle,
   isLivingAlone,
   coTenantsCount,
+  jpegBlob,
 }: SaveInvoiceToDriveParams): Promise<DriveInvoiceResult> {
   try {
     // 1. Get or create the single folder for all invoices
     const folder = await getOrCreateInvoicesFolder(accessToken);
     const folderId = folder.id;
 
-    // 2. Generate file name and HTML content
+    // 2. Generate file name for JPG
     const sanitizedNumber = invoice.invoiceNumber.replace(/\//g, '_');
     const sanitizedName = tenantName.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const fileName = `Invoice_${sanitizedNumber}_${sanitizedName}.html`;
-    const htmlContent = generateInvoiceHtml(
-      invoice,
-      tenantName,
-      tenantXHandle,
-      isLivingAlone,
-      coTenantsCount
-    );
+    const fileName = `Invoice_${sanitizedNumber}_${sanitizedName}.jpg`;
 
-    // 3. Check if file already exists in this folder
+    // 3. Obtain JPG Blob (passed from html2canvas or fallback)
+    let finalJpegBlob: Blob;
+    if (jpegBlob) {
+      finalJpegBlob = jpegBlob;
+    } else {
+      finalJpegBlob = await createFallbackInvoiceJpegBlob(invoice, tenantName, tenantXHandle);
+    }
+
+    // 4. Check if file already exists in this folder
     const fileQuery = encodeURIComponent(
       `name = '${fileName}' and '${folderId}' in parents and trashed = false`
     );
@@ -535,22 +734,22 @@ export async function saveInvoiceToDriveFolder({
     const metadata = {
       name: fileName,
       parents: existingFileId ? undefined : [folderId],
-      description: `Official Invoice Sewa ${invoice.invoiceNumber} untuk ${tenantName} di Baswara Sky Suites`,
-      mimeType: 'text/html',
+      description: `Official Invoice Sewa ${invoice.invoiceNumber} untuk ${tenantName} di Baswara Sky Suites (Format JPG)`,
+      mimeType: 'image/jpeg',
     };
 
-    const boundary = 'baswara_drive_upload_boundary_789';
-    const delimiter = `\r\n--${boundary}\r\n`;
-    const closeDelimiter = `\r\n--${boundary}--`;
+    const boundary = 'baswara_drive_upload_boundary_jpeg_789';
+    const metadataBlob = new Blob([JSON.stringify(metadata)], {
+      type: 'application/json; charset=UTF-8',
+    });
 
-    const multipartRequestBody =
-      delimiter +
-      'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-      JSON.stringify(metadata) +
-      delimiter +
-      'Content-Type: text/html; charset=UTF-8\r\n\r\n' +
-      htmlContent +
-      closeDelimiter;
+    const multipartRequestBody = new Blob([
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+      metadataBlob,
+      `\r\n--${boundary}\r\nContent-Type: image/jpeg\r\n\r\n`,
+      finalJpegBlob,
+      `\r\n--${boundary}--`,
+    ], { type: `multipart/related; boundary=${boundary}` });
 
     let uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink';
     let method = 'POST';
@@ -564,19 +763,18 @@ export async function saveInvoiceToDriveFolder({
       method,
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': `multipart/related; boundary=${boundary}`,
       },
       body: multipartRequestBody,
     });
 
     if (!uploadRes.ok) {
       const errText = await uploadRes.text();
-      console.error('Failed to upload invoice to Google Drive:', errText);
+      console.error('Failed to upload invoice JPG to Google Drive:', errText);
       return {
         success: false,
         folderId,
         folderWebViewLink: folder.webViewLink,
-        error: `Gagal menyimpan invoice ke Google Drive (${uploadRes.status}).`,
+        error: `Gagal menyimpan invoice JPG ke Google Drive (${uploadRes.status}).`,
       };
     }
 
@@ -594,7 +792,7 @@ export async function saveInvoiceToDriveFolder({
     console.error('Error in saveInvoiceToDriveFolder:', error);
     return {
       success: false,
-      error: error?.message || 'Terjadi kesalahan saat menyimpan ke Google Drive.',
+      error: error?.message || 'Terjadi kesalahan saat menyimpan file JPG ke Google Drive.',
     };
   }
 }

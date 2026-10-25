@@ -29,6 +29,35 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Administrator Google OAuth session storage (persisted across sessions)
+  let adminSession = {
+    accessToken: process.env.ADMIN_GOOGLE_ACCESS_TOKEN || '',
+    email: 'feel.ix.ee@gmail.com',
+    updatedAt: '',
+  };
+
+  app.get('/api/admin/google-token', (_req, res) => {
+    res.json({
+      connected: Boolean(adminSession.accessToken),
+      email: adminSession.email,
+      updatedAt: adminSession.updatedAt,
+      accessToken: adminSession.accessToken,
+    });
+  });
+
+  app.post('/api/admin/google-token', (req, res) => {
+    const { accessToken, email } = req.body;
+    if (accessToken) {
+      adminSession = {
+        accessToken,
+        email: email || 'feel.ix.ee@gmail.com',
+        updatedAt: new Date().toISOString(),
+      };
+      return res.json({ success: true, connected: true });
+    }
+    return res.status(400).json({ error: 'accessToken is required' });
+  });
+
   // Multimodal Interior & Furniture Scanner Endpoint
   app.post('/api/scanner/analyze', async (req, res) => {
     try {
