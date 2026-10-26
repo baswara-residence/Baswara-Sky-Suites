@@ -1,28 +1,127 @@
-# Rencana Implementasi & Status Fitur Baswara Sky Suites
+# Integrasi Google Sheets API & Netlify Functions
 
-## 1. Arsitektur Presentasi Per Halaman (Per-Page / Screen-by-Screen)
-- [x] **Eliminasi Continuous Long Scroll**: Seluruh halaman utama tidak lagi digulung panjang ke bawah, melainkan disajikan per layar (viewport-locked `h-screen overflow-hidden`).
-- [x] **Struktur 4 Halaman Diskret**:
-  - **Halaman 01 - Beranda & Filosofi**: Twilight Hero banner, sambutan *"Higher Living, Bigger Dreams"*, filosofi residensial PT Baswara Mangkubumi Residence, dan tombol aksi langsung ke unit.
-  - **Halaman 02 - Tower & Unit Explorer**: Pilihan unit Arunika & Baskara, filter kamar tidur, kartu unit luxury, dan visualizer denah unit.
-  - **Halaman 03 - Fasilitas & Layanan**: Galeri visual fasilitas bintang lima (Sky Pool, Helipad, Butler, Supercar Vault) dan 4 tahapan sewa resmi.
-  - **Halaman 04 - Tim Manajemen & Kontak**: Profil jajaran direksi, tim sekretariat, layanan butler, kantor pusat Jl. Boulevard Kusuma Menteng No. 8, serta footer resmi.
-- [x] **Kontrol Navigasi Multimodal**:
-  - **Top Navbar Tabs**: Switch instan antar halaman dengan highlight emas aktif (`01 Beranda`, `02 Tower & Unit`, `03 Fasilitas & Layanan`, `04 Tim & Kontak`).
-  - **Floating Right-Side Rail**: Indikator titik vertikal dengan nomor dan tooltip nama halaman saat disentuh.
-  - **Bottom Controller Bar**: Status nomor halaman (`01 / 04`), visual progress indicator, tombol `Prev` dan `Next`, serta shortcut cepat `Private Viewing`.
-  - **Keyboard Navigation**: Tombol `ArrowRight` / `PageDown` dan `ArrowLeft` / `PageUp` untuk berpindah halaman secara cepat.
+Rencana arsitektur dan panduan konfigurasi lengkap untuk menghubungkan Google Sheets API ke Netlify menggunakan Service Account, sehingga website dapat secara otomatis menyimpan data reservasi kamar dan invoice pemesanan customer langsung ke Google Spreadsheet.
 
-## 2. Struktur Biaya Sewa & Invoice Transparan
-- [x] **PPN 11%**: Dihitung otomatis dari total masa sewa (`Base Rent x Durasi`).
-- [x] **Bea Materai**: Biaya legalisasi dokumen Rp 10.000 tercantum transparan.
-- [x] **Security Deposit**: Tepat 2 bulan sewa pokok (`discountedMonthly * 2`, 100% Refundable).
-- [x] **Penyederhanaan Tampilan Invoice**: Menghilangkan duplikasi tabel dan daftar ringkasan ganda, menghapus baris Rp 0 yang berlebih, dan menyajikan rincian penagihan yang ringkas, bersih, dan mewah.
-- [x] **Pembersihan Elemen yang Ditandai & 'Tahap 3'**:
-  - Menghapus label "PT BASWARA MANGKUBUMI RESIDENCE · PRABASWARA GROUP" di atas judul invoice.
-  - Menghapus "Saluran Resmi X: @the_BASWARA · Leasing Management".
-  - Menghapus badge dan penyebutan "STATUS: MENUNGGU PEMBAYARAN TAHAP 3" / "(Tahap 3)".
-  - Menghapus baris "Status Hunian", "Luas Unit", dan "Durasi Masa Sewa" dari blok metadata calon penyewa & unit pada tampilan invoice.
-- [x] **Penyimpanan Otomatis ke Google Drive**: Invoice yang diterbitkan langsung otomatis diunggah dan disimpan ke folder `Baswara Sky Suites - Invoices` di Google Drive saat formulir dikirim, lengkap dengan tautan langsung untuk membuka dokumen.
-- [x] **Formulir Registrasi Utuh**: Mengembalikan formulir pendaftaran (`ViewingModal.tsx`) ke format lengkap semula beserta banner integrasi resmi.
-- [x] **Instruksi Pembayaran Resmi**: Rekening BCA a.n. PT Baswara Mangkubumi Residence (`8820 9182 33`).
+---
+
+### User Review & Critical Decisions
+
+> [!IMPORTANT]
+> Berdasarkan preferensi yang Anda pilih:
+> - **Metode Autentikasi**: Netlify Serverless Function menggunakan Google Service Account (backend aman, kunci privat tidak pernah bocor ke browser publik).
+> - **Status Kredensial**: Anda sudah memiliki JSON Key dari Google Cloud, siap dimasukkan ke Environment Variables Netlify.
+> - **Fungsi Utama**: Menyimpan data formulir booking kamar dan rincian invoice sewa ke Google Sheets.
+
+- **Spreadsheet Target**: `1stru_AZYdNuEfAW6euxwkuYUPbNBCGb38oWEgIKJ03A` (atau disesuaikan melalui environment variable `GOOGLE_SPREADSHEET_ID`).
+- **Izin Google Sheets**: Email Service Account wajib di-invite sebagai **Editor** pada Google Spreadsheet agar API memiliki izin menambahkan baris baru (`append`).
+
+---
+
+### 1. Overview & Core Concept
+
+- **Tujuan**: Memungkinkan website Baswara Sky Suites mengirimkan data reservasi KYC dan tagihan invoice dari browser ke serverless function Netlify, yang kemudian menulis baris data baru ke Google Sheets secara aman.
+- **Masalah yang Diatasi**: Google API memerlukan kredensial privat. Jika dipanggil langsung dari browser tanpa login pengguna, kunci privat rentan tercuri. Dengan Netlify Functions, kredensial tersimpan aman di server Netlify dan customer dapat memesan tanpa perlu login akun Google pribadi mereka.
+- **Nilai Utama**: Proses pemesanan 100% mulus bagi customer, dan seluruh data reservasi tersentralisasi di Google Spreadsheet pihak manajemen.
+
+---
+
+### 2. Panduan Langkah Konfigurasi Netlify & Google Sheets
+
+Berikut adalah 3 langkah utama yang perlu dilakukan agar API terhubung sempurna di Netlify:
+
+```
+┌─────────────────────────┐         ┌───────────────────────────┐         ┌─────────────────────────┐
+│   Frontend (React SPA)  │         │ Netlify Serverless Fn     │         │   Google Sheets API     │
+│  ViewingModal / Booking ├────────►│ /api/saveBooking          ├────────►│ 1stru_AZYdNuEfAW...     │
+│   (Kirim data form)     │  POST   │ (Auth via Service Account)│ Append  │ (Baris baru tersimpan)  │
+└─────────────────────────┘         └───────────────────────────┘         └─────────────────────────┘
+```
+
+#### Langkah A: Share Spreadsheet ke Email Service Account (Wajib)
+1. Buka spreadsheet Anda di browser: [Google Sheets](https://docs.google.com/spreadsheets/d/1stru_AZYdNuEfAW6euxwkuYUPbNBCGb38oWEgIKJ03A/edit).
+2. Klik tombol **Share (Bagikan)** di pojok kanan atas.
+3. Buka file JSON Service Account yang Anda download dari Google Cloud Console, cari baris `"client_email"` (contoh: `nama-service-account@project-id.iam.gserviceaccount.com`).
+4. Tempel (paste) email tersebut ke kolom Share Google Sheets, pastikan role dipilih sebagai **Editor**, lalu klik **Send / Bagikan**.
+
+#### Langkah B: Masukkan Environment Variables di Netlify Dashboard
+1. Buka dashboard Netlify Anda di [app.netlify.com](https://app.netlify.com).
+2. Pilih situs Anda -> Masuk ke **Site configuration** -> **Environment variables**.
+3. Tambahkan 3 variabel berikut:
+   - `GOOGLE_CLIENT_EMAIL`: Nilai `client_email` dari file JSON Anda.
+   - `GOOGLE_PRIVATE_KEY`: Nilai `private_key` dari file JSON Anda (termasuk tag `-----BEGIN PRIVATE KEY-----` dan `-----END PRIVATE KEY-----`).
+   - `GOOGLE_SPREADSHEET_ID`: `1stru_AZYdNuEfAW6euxwkuYUPbNBCGb38oWEgIKJ03A`.
+
+#### Langkah C: Konfigurasi Routing Netlify (`netlify.toml`)
+Menyediakan file `netlify.toml` pada repositori agar endpoint API `/api/*` secara otomatis diarahkan ke `/.netlify/functions/*` dan single-page routing React tetap berjalan normal:
+- Routing `/api/*` -> `/.netlify/functions/:splat`
+- Routing `/*` -> `/index.html`
+
+---
+
+### 3. Key Product Decisions & Trade-Offs
+
+- **Endpoint Terpadu (`saveBooking.cjs` & `getsheetsData.cjs`)**:
+  - *Chosen Approach*: Menyediakan endpoint serverless khusus `saveBooking.cjs` di folder `netlify/functions/` untuk operasi tulis (append baris booking), serta mempertahankan `getsheetsData.cjs` untuk membaca data jika dibutuhkan.
+  - *Why*: Memisahkan operasi baca dan tulis memudahkan isolasi error, manajemen hak akses, dan optimasi runtime.
+- **Dukungan Dual-Mode di Frontend**:
+  - *Chosen Approach*: Frontend akan memanggil `/api/saveBooking` terlebih dahulu via Netlify Function. Jika serverless endpoint tidak tersedia atau offline, frontend memiliki opsi fallback ke Google OAuth.
+  - *Why*: Memastikan aplikasi tetap dapat diuji coba baik di local development / AI Studio preview maupun saat di-deploy ke Netlify.
+
+---
+
+### 4. Technical Architecture & Data Strategy
+
+#### Diagram Alur Data
+
+```
+┌────────────────────────────────────────────────────────┐
+│                      PENGGUNA                          │
+│  Mengisi formulir KYC & Invoice di ViewingModal        │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                FRONTEND (src/lib/...)                  │
+│  Format payload: BookingSubmissionData                 │
+│  fetch('/api/saveBooking', { method: 'POST', body })   │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│           NETLIFY FUNCTION (saveBooking.cjs)           │
+│  1. Parse request body                                 │
+│  2. Inisialisasi google.auth.GoogleAuth                │
+│  3. Formatter baris tabel (18 kolom standar)           │
+│  4. sheets.spreadsheets.values.append                  │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│            GOOGLE SPREADSHEETS SERVER                  │
+│  Menyimpan baris reservasi di tab 'Kuesioner & KYC'    │
+└────────────────────────────────────────────────────────┘
+```
+
+#### Struktur Kolom Data yang Disimpan:
+1. Waktu Pendaftaran (Timestamp ISO/WIB)
+2. Nama Lengkap Customer
+3. Akun Twitter / X (`x.com/...`)
+4. Face Claim
+5. Tempat & Tanggal Lahir
+6. Pekerjaan
+7. Status & Detail Hewan Peliharaan
+8. Pilihan Tipe Unit Suite
+9. Tower
+10. Status Hunian (Sendiri / Berbagi)
+11. Rincian Co-Tenants
+12. Storyline Singkat
+13. Link Thread / Utas Karakter
+14. Bukti Persetujuan Rules
+15. Nomor Invoice Resmi & Nominal Upfront
+16. Status KYC Awal (`PENDING_REVIEW`)
+
+#### File yang Akan Dibuat & Dikonfigurasi:
+1. `netlify.toml`: Mengatur folder functions dan redirect rewrite `/api/*`.
+2. `netlify/functions/saveBooking.cjs`: Serverless function untuk append row booking ke Google Sheets.
+3. `server.ts`: Tambahan proxy route lokal `/api/saveBooking` agar pengujian langsung berhasil di preview dev server.
+4. `src/lib/googleSheets.ts` & `src/components/ViewingModal.tsx`: Menghubungkan tombol submit form langsung ke endpoint Netlify.

@@ -281,3 +281,43 @@ export async function saveBookingToGoogleSheets(
     };
   }
 }
+
+/**
+ * Menyimpan data reservasi langsung ke Google Sheets melalui Netlify Serverless Function (/api/saveBooking).
+ * Menggunakan Google Service Account sehingga customer tidak perlu login akun Google pribadi.
+ */
+export async function saveBookingViaNetlify(
+  booking: BookingSubmissionData
+): Promise<SaveBookingResult> {
+  try {
+    const res = await fetch('/api/saveBooking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(booking),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.success) {
+      return {
+        success: false,
+        error: data.error || data.tip || `Server error (${res.status}): Gagal menyimpan ke Google Sheets via Netlify.`,
+      };
+    }
+
+    return {
+      success: true,
+      spreadsheetId: data.spreadsheetId,
+      spreadsheetUrl: data.spreadsheetUrl,
+    };
+  } catch (err: any) {
+    console.error('Error in saveBookingViaNetlify:', err);
+    return {
+      success: false,
+      error: err.message || 'Koneksi ke endpoint Netlify Function (/api/saveBooking) gagal.',
+    };
+  }
+}
+

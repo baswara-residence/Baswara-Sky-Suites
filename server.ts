@@ -59,6 +59,45 @@ async function startServer() {
     return res.status(400).json({ error: 'accessToken is required' });
   });
 
+  // Netlify Serverless Functions compatibility routes for local development
+  app.all('/api/saveBooking', async (req, res) => {
+    try {
+      const saveBookingMod = await import('./netlify/functions/saveBooking.cjs');
+      const handler = (saveBookingMod as any).default?.handler || (saveBookingMod as any).handler;
+      const event = {
+        httpMethod: req.method,
+        headers: req.headers,
+        queryStringParameters: req.query,
+        body: typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {}),
+      };
+      const result = await handler(event, {});
+      const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+      res.status(result.statusCode || 200).set(result.headers || {}).json(parsedBody);
+    } catch (err: any) {
+      console.error('Error invoking saveBooking handler in server.ts:', err);
+      res.status(500).json({ error: err.message || 'Internal error in saveBooking function' });
+    }
+  });
+
+  app.all('/api/getsheetsData', async (req, res) => {
+    try {
+      const getsheetsMod = await import('./netlify/functions/getsheetsData.cjs');
+      const handler = (getsheetsMod as any).default?.handler || (getsheetsMod as any).handler;
+      const event = {
+        httpMethod: req.method,
+        headers: req.headers,
+        queryStringParameters: req.query,
+        body: typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {}),
+      };
+      const result = await handler(event, {});
+      const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+      res.status(result.statusCode || 200).set(result.headers || {}).json(parsedBody);
+    } catch (err: any) {
+      console.error('Error invoking getsheetsData handler in server.ts:', err);
+      res.status(500).json({ error: err.message || 'Internal error in getsheetsData function' });
+    }
+  });
+
   // Multimodal Interior & Furniture Scanner Endpoint
   app.post('/api/scanner/analyze', async (req, res) => {
     try {

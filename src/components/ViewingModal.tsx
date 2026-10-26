@@ -34,7 +34,13 @@ import {
   OFFICIAL_BANK_INFO,
 } from '../lib/invoiceUtils';
 import { googleSignIn, getAccessToken, saveAdminToken, auth } from '../lib/googleAuth';
-import { saveBookingToGoogleSheets, SaveBookingResult, BookingSubmissionData, CoTenant } from '../lib/googleSheets';
+import {
+  saveBookingToGoogleSheets,
+  saveBookingViaNetlify,
+  SaveBookingResult,
+  BookingSubmissionData,
+  CoTenant,
+} from '../lib/googleSheets';
 import {
   saveInvoiceToDriveFolder,
   ADMIN_EMAIL,
@@ -265,49 +271,54 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
     overrideToken?: string
   ) => {
     const token = overrideToken || (await getAccessToken());
-    if (!token) {
-      console.info('Admin Google account not yet connected; data queued in system.');
-      return;
-    }
 
-    // 1. Simpan Invoice ke Google Drive Administrator dalam format JPG
-    setIsSavingToDrive(true);
-    try {
-      // Delay to ensure the invoice card element is mounted
-      await new Promise((r) => setTimeout(r, 250));
-      const jpegBlob = await captureInvoiceJpegBlob();
-
-      const driveRes = await saveInvoiceToDriveFolder({
-        accessToken: token,
-        invoice: targetInvoice,
-        tenantName: fullName.trim(),
-        tenantXHandle: normalizedUsername,
-        isLivingAlone,
-        coTenantsCount: coTenants.length,
-        jpegBlob,
-      });
-      setDriveResult(driveRes);
-    } catch (err: any) {
-      setDriveResult({
-        success: false,
-        error: err?.message || 'Gagal menyimpan invoice JPG ke Google Drive Administrator.',
-      });
-    } finally {
-      setIsSavingToDrive(false);
-    }
-
-    // 2. Simpan Data Booking ke Google Sheets Administrator
+    // 1. Simpan Data Booking & Invoice ke Google Sheets via Netlify Function (Service Account)
     setIsSavingToSheets(true);
     try {
-      const result = await saveBookingToGoogleSheets(bookingData, token);
-      setSheetsResult(result);
+      const netlifyRes = await saveBookingViaNetlify(bookingData);
+      if (netlifyRes.success) {
+        setSheetsResult(netlifyRes);
+      } else if (token) {
+        // Fallback ke OAuth jika Netlify Service Account belum aktif
+        const directRes = await saveBookingToGoogleSheets(bookingData, token);
+        setSheetsResult(directRes);
+      } else {
+        setSheetsResult(netlifyRes);
+      }
     } catch (err: any) {
       setSheetsResult({
         success: false,
-        error: err?.message || 'Gagal menyimpan ke Google Sheets Administrator.',
+        error: err?.message || 'Gagal menyimpan ke Google Sheets.',
       });
     } finally {
       setIsSavingToSheets(false);
+    }
+
+    // 2. Simpan Invoice ke Google Drive Administrator dalam format JPG (jika admin OAuth token tersedia)
+    if (token) {
+      setIsSavingToDrive(true);
+      try {
+        await new Promise((r) => setTimeout(r, 250));
+        const jpegBlob = await captureInvoiceJpegBlob();
+
+        const driveRes = await saveInvoiceToDriveFolder({
+          accessToken: token,
+          invoice: targetInvoice,
+          tenantName: fullName.trim(),
+          tenantXHandle: normalizedUsername,
+          isLivingAlone,
+          coTenantsCount: coTenants.length,
+          jpegBlob,
+        });
+        setDriveResult(driveRes);
+      } catch (err: any) {
+        setDriveResult({
+          success: false,
+          error: err?.message || 'Gagal menyimpan invoice JPG ke Google Drive Administrator.',
+        });
+      } finally {
+        setIsSavingToDrive(false);
+      }
     }
   };
 
@@ -1072,6 +1083,52 @@ Natasha Wijaya (Head of Leasing)`;
                       </button>
                     </div>
                   </div>
+
+                  {/* Google Sheets Sync Status Bar */}
+                  {isSavingToSheets && (
+                    <div className="bg-[#111827] border border-amber-500/30 p-2.5 flex items-center justify-between text-xs text-amber-200">
+                      <div className="flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin text-amber-400" />
+                        <span>Menyimpan reservasi & invoice ke Google Sheets...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {sheetsResult?.success && (
+                    <div className="bg-emerald-950/40 border border-emerald-500/40 p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-200">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                        <span>Data reservasi tersimpan otomatis ke Google Sheets</span>
+                      </div>
+                      {sheetsResult.spreadsheetUrl && (
+                        <a
+                          href={sheetsResult.spreadsheetUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-300 hover:text-white underline font-mono text-[11px]"
+                        >
+                          <span>Buka Spreadsheet</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {sheetsResult && !sheetsResult.success && (
+                    <div className="bg-rose-950/30 border border-rose-500/30 p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle size={15} className="text-rose-400 shrink-0" />
+                        <span className="text-[11px] max-w-sm sm:max-w-md">{sheetsResult.error}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleManualSaveToSheets}
+                        className="px-2.5 py-1 bg-rose-900/60 hover:bg-rose-800 text-rose-100 border border-rose-600/40 text-[11px] font-mono cursor-pointer"
+                      >
+                        Coba Simpan Ulang
+                      </button>
+                    </div>
+                  )}
 
                   {/* Printable Luxury Invoice Card (Rendered to JPG for Google Drive) */}
                   <div id="official-invoice-card" className="bg-[#0B0F19] border-2 border-[#D4AF37]/50 p-6 sm:p-8 relative text-slate-200 shadow-2xl">
