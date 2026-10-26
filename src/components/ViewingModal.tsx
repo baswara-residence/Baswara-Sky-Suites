@@ -265,6 +265,23 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
     }
   };
 
+  const captureInvoiceJpegBase64 = async (): Promise<string | null> => {
+    try {
+      const invoiceElement = document.getElementById('official-invoice-card');
+      if (!invoiceElement) return null;
+      const canvas = await html2canvas(invoiceElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#0B0F19',
+        logging: false,
+      });
+      return canvas.toDataURL('image/jpeg', 0.92);
+    } catch (err) {
+      console.warn('html2canvas base64 capture error:', err);
+      return null;
+    }
+  };
+
   const syncSubmissionToAdminDriveAndSheets = async (
     targetInvoice: QuoteData,
     bookingData: BookingSubmissionData,
@@ -272,12 +289,34 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
   ) => {
     const token = overrideToken || (await getAccessToken());
 
-    // 1. Simpan Data Booking & Invoice ke Google Sheets via Netlify Function (Service Account)
+    // 1. Tangkap invoice JPG dalam format Base64 untuk dikirim ke Netlify Serverless Function
     setIsSavingToSheets(true);
+    setIsSavingToDrive(true);
+
+    try {
+      // Jeda singkat agar kartu invoice ter-render di DOM
+      await new Promise((r) => setTimeout(r, 250));
+      const base64Jpg = await captureInvoiceJpegBase64();
+      if (base64Jpg) {
+        bookingData.invoiceBase64 = base64Jpg;
+      }
+    } catch (captureErr) {
+      console.warn('Gagal menangkap invoice JPG base64:', captureErr);
+    }
+
+    // 2. Simpan Data Booking ke Google Sheets & Upload Invoice JPG ke Google Drive via Netlify Function
     try {
       const netlifyRes = await saveBookingViaNetlify(bookingData);
       if (netlifyRes.success) {
         setSheetsResult(netlifyRes);
+        if (netlifyRes.driveFileUrl) {
+          setDriveResult({
+            success: true,
+            fileId: netlifyRes.driveFileId,
+            fileWebViewLink: netlifyRes.driveFileUrl,
+            folderWebViewLink: netlifyRes.driveFolderUrl,
+          });
+        }
       } else if (token) {
         // Fallback ke OAuth jika Netlify Service Account belum aktif
         const directRes = await saveBookingToGoogleSheets(bookingData, token);
@@ -292,15 +331,14 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
       });
     } finally {
       setIsSavingToSheets(false);
+      setIsSavingToDrive(false);
     }
 
-    // 2. Simpan Invoice ke Google Drive Administrator dalam format JPG (jika admin OAuth token tersedia)
-    if (token) {
+    // 3. Cadangan: Jika Netlify belum upload JPG dan token OAuth admin aktif, upload via direct Drive API
+    if (token && (!driveResult?.success || !bookingData.invoiceBase64)) {
       setIsSavingToDrive(true);
       try {
-        await new Promise((r) => setTimeout(r, 250));
         const jpegBlob = await captureInvoiceJpegBlob();
-
         const driveRes = await saveInvoiceToDriveFolder({
           accessToken: token,
           invoice: targetInvoice,
@@ -1127,6 +1165,47 @@ Natasha Wijaya (Head of Leasing)`;
                       >
                         Coba Simpan Ulang
                       </button>
+                    </div>
+                  )}
+
+                  {/* Google Drive JPG Sync Status Bar */}
+                  {isSavingToDrive && !driveResult?.success && (
+                    <div className="bg-[#111827] border border-indigo-500/30 p-2.5 flex items-center justify-between text-xs text-indigo-200">
+                      <div className="flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin text-indigo-400" />
+                        <span>Mengunggah invoice resmi format JPG ke Google Drive...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {driveResult?.success && driveResult?.fileWebViewLink && (
+                    <div className="bg-indigo-950/40 border border-indigo-500/40 p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-200">
+                      <div className="flex items-center gap-2">
+                        <HardDrive size={15} className="text-indigo-400 shrink-0" />
+                        <span>Invoice JPG tersimpan di Google Drive ({INVOICE_FOLDER_NAME})</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={driveResult.fileWebViewLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-indigo-300 hover:text-white underline font-mono text-[11px]"
+                        >
+                          <span>Lihat File JPG</span>
+                          <ExternalLink size={12} />
+                        </a>
+                        {driveResult.folderWebViewLink && (
+                          <a
+                            href={driveResult.folderWebViewLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 font-mono text-[11px]"
+                          >
+                            <span>Buka Folder</span>
+                            <FolderArchive size={12} />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
 

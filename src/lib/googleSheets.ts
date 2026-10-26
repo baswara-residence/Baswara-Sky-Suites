@@ -31,12 +31,16 @@ export interface BookingSubmissionData {
   tenureMonths?: number;
   initialTotalUpfront?: number;
   specialNotes?: string;
+  invoiceBase64?: string;
 }
 
 export interface SaveBookingResult {
   success: boolean;
   spreadsheetId?: string;
   spreadsheetUrl?: string;
+  driveFileId?: string;
+  driveFileUrl?: string;
+  driveFolderUrl?: string;
   isNewSpreadsheet?: boolean;
   error?: string;
 }
@@ -311,6 +315,9 @@ export async function saveBookingViaNetlify(
       success: true,
       spreadsheetId: data.spreadsheetId,
       spreadsheetUrl: data.spreadsheetUrl,
+      driveFileId: data.driveFileId,
+      driveFileUrl: data.driveFileUrl,
+      driveFolderUrl: data.driveFolderUrl,
     };
   } catch (err: any) {
     console.error('Error in saveBookingViaNetlify:', err);
