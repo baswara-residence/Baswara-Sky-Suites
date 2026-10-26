@@ -37,7 +37,7 @@ exports.handler = async function (event, context) {
       },
       scopes: [
         'https://www.googleapis.com/auth/spreadsheets.readonly', 
-        'https://www.googleapis.com/auth/drive.readonly'
+        'https://www.googleapis.com/auth/drive.file'
       ],
     });
 
