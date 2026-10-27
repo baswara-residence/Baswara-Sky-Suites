@@ -12,16 +12,8 @@ import {
   Sparkles,
   Building2,
   Calendar,
-  CheckCircle,
-  CheckCircle2,
-  FileDown,
-  HardDrive,
-  Loader2,
-  ExternalLink,
-  AlertCircle,
 } from 'lucide-react';
 import { formatOfficialInvoiceNumber, OFFICIAL_BANK_INFO } from '../lib/invoiceUtils';
-import { saveQuoteJpgToDrive, downloadQuoteDataJpg } from '../lib/googleDriveInvoice';
 
 export interface QuoteData {
   invoiceNumber: string;
@@ -69,8 +61,6 @@ export const CostCalculator: React.FC<CostCalculatorProps> = ({
   const [invoiceCopied, setInvoiceCopied] = useState<boolean>(false);
   // View mode: 'calculator' or 'invoice'
   const [activeTab, setActiveTab] = useState<'calculator' | 'invoice'>('calculator');
-  const [isSavingDrive, setIsSavingDrive] = useState<boolean>(false);
-  const [driveResult, setDriveResult] = useState<{ success: boolean; link?: string; error?: string } | null>(null);
 
   const unit = UNITS_DATA.find((u) => u.id === activeUnitId) || UNITS_DATA[0];
   const isBaskara = unit.tower === 'Baskara';
@@ -253,23 +243,6 @@ Head of Leasing: Natasha Wijaya
     navigator.clipboard.writeText(invoiceText);
     setInvoiceCopied(true);
     setTimeout(() => setInvoiceCopied(false), 3000);
-  };
-
-  const handleDownloadJpg = () => {
-    downloadQuoteDataJpg(quoteData, 'Pendaftar Sewa Terverifikasi');
-  };
-
-  const handleSaveToDrive = async () => {
-    setIsSavingDrive(true);
-    setDriveResult(null);
-    try {
-      const res = await saveQuoteJpgToDrive(quoteData, 'Pendaftar Sewa Terverifikasi');
-      setDriveResult(res);
-    } catch (err: any) {
-      setDriveResult({ success: false, error: err.message || 'Gagal menyimpan ke Google Drive' });
-    } finally {
-      setIsSavingDrive(false);
-    }
   };
 
   const handlePrint = () => {
@@ -475,67 +448,10 @@ Head of Leasing: Natasha Wijaya
 
                 {/* Action Buttons */}
                 <div className="pt-6 border-t border-slate-800 flex flex-col gap-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={handleDownloadJpg}
-                      className="py-2.5 px-3 border border-[#D4AF37]/50 text-xs tracking-wider uppercase text-[#F3E5AB] hover:bg-[#D4AF37]/15 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <FileDown size={14} className="text-[#D4AF37]" />
-                      <span>Unduh JPG</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleSaveToDrive}
-                      disabled={isSavingDrive}
-                      className="py-2.5 px-3 border border-indigo-500/50 text-xs tracking-wider uppercase text-indigo-200 hover:bg-indigo-950/40 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                    >
-                      {isSavingDrive ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin text-indigo-400" />
-                          <span>Menyimpan...</span>
-                        </>
-                      ) : (
-                        <>
-                          <HardDrive size={14} className="text-indigo-400" />
-                          <span>Ke Drive</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {driveResult?.success && (
-                    <div className="p-2 bg-indigo-950/40 border border-indigo-500/40 text-[11px] text-indigo-200 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
-                        <span>Tersimpan di Google Drive</span>
-                      </span>
-                      {driveResult.link && (
-                        <a
-                          href={driveResult.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-300 underline font-mono inline-flex items-center gap-1"
-                        >
-                          <span>Buka</span>
-                          <ExternalLink size={10} />
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                  {driveResult && !driveResult.success && (
-                    <div className="p-2 bg-rose-950/40 border border-rose-500/40 text-[11px] text-rose-200 flex items-center gap-1.5">
-                      <AlertCircle size={13} className="text-rose-400 shrink-0" />
-                      <span className="truncate">{driveResult.error}</span>
-                    </div>
-                  )}
-
                   <button
                     type="button"
                     onClick={handleCopyQuote}
-                    className="w-full py-2.5 px-3 border border-slate-700 text-xs tracking-wider uppercase text-slate-200 hover:text-white hover:border-slate-500 transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-2.5 px-3 border border-slate-700 text-xs tracking-wider uppercase text-slate-200 hover:text-white hover:border-slate-500 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Copy size={13} />
                     <span>{copied ? 'Tersalin!' : 'Salin Ringkasan Estimasi Biaya'}</span>
@@ -573,35 +489,7 @@ Head of Leasing: Natasha Wijaya
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleDownloadJpg}
-                  className="px-3 py-1.5 border border-[#D4AF37]/60 hover:bg-[#D4AF37]/15 text-[#F3E5AB] text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <FileDown size={13} className="text-[#D4AF37]" />
-                  <span>Unduh File JPG</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSaveToDrive}
-                  disabled={isSavingDrive}
-                  className="px-3 py-1.5 border border-indigo-500/50 hover:bg-indigo-950/40 text-indigo-200 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingDrive ? (
-                    <>
-                      <Loader2 size={13} className="animate-spin text-indigo-400" />
-                      <span>Menyimpan ke Drive...</span>
-                    </>
-                  ) : (
-                    <>
-                      <HardDrive size={13} className="text-indigo-400" />
-                      <span>Simpan ke Google Drive</span>
-                    </>
-                  )}
-                </button>
-
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleCopyInvoice}
@@ -612,34 +500,6 @@ Head of Leasing: Natasha Wijaya
                 </button>
               </div>
             </div>
-
-            {/* Google Drive Status Bar in Invoice View */}
-            {driveResult?.success && (
-              <div className="bg-indigo-950/40 border border-indigo-500/40 p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-200">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
-                  <span>Invoice JPG berhasil disimpan ke Google Drive</span>
-                </div>
-                {driveResult.link && (
-                  <a
-                    href={driveResult.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-indigo-300 hover:text-white underline font-mono text-[11px]"
-                  >
-                    <span>Buka File JPG</span>
-                    <ExternalLink size={12} />
-                  </a>
-                )}
-              </div>
-            )}
-
-            {driveResult && !driveResult.success && (
-              <div className="bg-rose-950/30 border border-rose-500/30 p-2.5 flex items-center gap-2 text-xs text-rose-200">
-                <AlertCircle size={15} className="text-rose-400 shrink-0" />
-                <span className="text-[11px]">{driveResult.error}</span>
-              </div>
-            )}
 
             {/* Printable Official Invoice Card */}
             <div className="bg-[#0B0F19] border-2 border-[#D4AF37]/50 p-6 sm:p-8 relative text-slate-200">
