@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, Sparkles, Key, Cpu, Eye, Compass, Car, Users } from 'lucide-react';
-import arunikaImg from '@/src/assets/images/tower_arunika_facade_1792311582736.jpg';
-import baskaraImg from '@/src/assets/images/tower_baskara_facade_1792311582650.jpg';
+import arunikaImg from '../assets/images/tower_arunika_facade_1792311582736.jpg';
+import baskaraImg from '../assets/images/tower_baskara_facade_1792311582650.jpg';
 
 interface TowersSectionProps {
   onSelectTower: (tower: 'Arunika' | 'Baskara') => void;
@@ -58,6 +58,9 @@ export const TowersSection: React.FC<TowersSectionProps> = ({ onSelectTower }) =
               <img
                 src={arunikaImg}
                 alt="Tower Arunika Modern Luxury Skyscraper"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/tower_arunika_facade_1792311582736.jpg';
+                }}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 referrerPolicy="no-referrer"
               />
@@ -133,6 +136,9 @@ export const TowersSection: React.FC<TowersSectionProps> = ({ onSelectTower }) =
               <img
                 src={baskaraImg}
                 alt="Tower Baskara Ultra Luxury Skyscraper"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/tower_baskara_facade_1792311582650.jpg';
+                }}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 referrerPolicy="no-referrer"
               />

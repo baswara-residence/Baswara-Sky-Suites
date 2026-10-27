@@ -31,6 +31,7 @@ import {
 import {
   formatOfficialInvoiceNumber,
   getNextInvoiceSequence,
+  fetchLiveInvoiceSequence,
   OFFICIAL_BANK_INFO,
 } from '../lib/invoiceUtils';
 import { googleSignIn, getAccessToken, saveAdminToken, auth } from '../lib/googleAuth';
@@ -309,6 +310,9 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
       const netlifyRes = await saveBookingViaNetlify(bookingData);
       if (netlifyRes.success) {
         setSheetsResult(netlifyRes);
+        if (netlifyRes.officialInvoiceNumber) {
+          setGeneratedInvoice((prev) => prev ? { ...prev, invoiceNumber: netlifyRes.officialInvoiceNumber! } : prev);
+        }
         if (netlifyRes.driveFileUrl) {
           setDriveResult({
             success: true,
@@ -443,10 +447,10 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
       return;
     }
 
-    // Terbitkan nomor invoice resmi:
+    // Terbitkan nomor invoice resmi live dari baris Google Sheets:
     // Format: Bulan, Tahun, Nomor Urut, Kode A (Arunika) / B (Baskara), tanpa jenis unit & tanpa lama sewa
-    const seq = getNextInvoiceSequence();
-    const invNumber = attachedQuote?.invoiceNumber || formatOfficialInvoiceNumber(currentUnit.tower, seq);
+    const liveSeqData = await fetchLiveInvoiceSequence(currentUnit.tower);
+    const invNumber = attachedQuote?.invoiceNumber || liveSeqData.invoiceNumber;
     const tenure = (attachedQuote?.tenureMonths || 3) as 3 | 6 | 12;
     const baseMonthly = currentUnit.pricePerMonth;
     const discountRate = tenure === 12 ? 0.10 : tenure === 6 ? 0.05 : 0;

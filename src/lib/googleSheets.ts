@@ -41,6 +41,8 @@ export interface SaveBookingResult {
   driveFileId?: string;
   driveFileUrl?: string;
   driveFolderUrl?: string;
+  officialInvoiceNumber?: string;
+  globalSequence?: number;
   isNewSpreadsheet?: boolean;
   error?: string;
 }
@@ -318,6 +320,8 @@ export async function saveBookingViaNetlify(
       driveFileId: data.driveFileId,
       driveFileUrl: data.driveFileUrl,
       driveFolderUrl: data.driveFolderUrl,
+      officialInvoiceNumber: data.officialInvoiceNumber,
+      globalSequence: data.globalSequence,
     };
   } catch (err: any) {
     console.error('Error in saveBookingViaNetlify:', err);

@@ -1,3 +1,9 @@
+import supercarVaultImg from '../assets/images/supercar_vault_1792672656950.jpg';
+import sovereignFoyerImg from '../assets/images/sovereign_foyer_1792672657246.jpg';
+import poolImg from '../assets/images/altitude_sanctuary_pool_1792311584127.jpg';
+import aristocratClubImg from '../assets/images/aristocrat_club_1792672659047.jpg';
+import helipadImg from '../assets/images/rooftop_helipad_1792672658134.jpg';
+
 export interface FacilitySubItem {
   title: string;
   description: string;
@@ -29,11 +35,11 @@ export const FACILITIES_DATA: FacilityLevel[] = [
     tower: 'Baskara',
     tagline: 'Museum-Grade Automotive Vault & Robotic Valet',
     description: 'Area parkir bawah tanah khusus supercar berlantai epoksi antibakteri dengan pencahayaan pameran (showroom lighting), pengatur kelembapan udara konstan, dan sistem valet nirsentuh otomatis.',
-    image: '/src/assets/images/supercar_vault_1792672656950.jpg',
+    image: supercarVaultImg,
     gallery: [
       {
         title: 'Supercar Gallery & Vault',
-        image: '/src/assets/images/supercar_vault_1792672656950.jpg'
+        image: supercarVaultImg
       },
       {
         title: 'Touchless Automated Valet',
@@ -74,11 +80,11 @@ export const FACILITIES_DATA: FacilityLevel[] = [
     tower: 'Baskara',
     tagline: 'Concealed Porte-Cochère & Dedicated Personal Attaché',
     description: 'Kedatangan VVIP yang tersembunyi dari jalan utama, dikelilingi taman vertikal rimbun untuk proteksi privasi mutlak tanpa lobi umum yang bising.',
-    image: '/src/assets/images/sovereign_foyer_1792672657246.jpg',
+    image: sovereignFoyerImg,
     gallery: [
       {
         title: 'VVIP Drop-Off & Secret Garden',
-        image: '/src/assets/images/sovereign_foyer_1792672657246.jpg'
+        image: sovereignFoyerImg
       },
       {
         title: 'The Sovereign Foyer & Concierge',
@@ -205,11 +211,11 @@ export const FACILITIES_DATA: FacilityLevel[] = [
     tower: 'Baskara',
     tagline: 'Private Cabana Pool, Hyperbaric Oxygen & Japanese Hinoki Onsen',
     description: 'Suaka relaksasi nirbising dengan kolam renang cabana tertutup gaya resor butik, pemandian air panas onsen Jepang Hinoki, ruang terapi hiperbarik, dan studio kebugaran privat.',
-    image: '/src/assets/images/altitude_sanctuary_pool_1792311584127.jpg',
+    image: poolImg,
     gallery: [
       {
         title: 'Private Cabana Pool',
-        image: '/src/assets/images/altitude_sanctuary_pool_1792311584127.jpg'
+        image: poolImg
       },
       {
         title: 'Hyperbaric & Japanese Onsen Retreat',
@@ -250,11 +256,11 @@ export const FACILITIES_DATA: FacilityLevel[] = [
     tower: 'Baskara',
     tagline: "Chef's Table Fine-Dining, Private KTV & Sommelier Wine Cellar",
     description: 'Pusat gastronomi dan relaksasi eksklusif penghuni dengan dapur perjamuan koki Michelin privat, ruang KTV akustik standar rekaman, dan cigar lounge berinsulasi udara.',
-    image: '/src/assets/images/aristocrat_club_1792672659047.jpg',
+    image: aristocratClubImg,
     gallery: [
       {
         title: "Chef's Table Fine-Dining Suite",
-        image: '/src/assets/images/aristocrat_club_1792672659047.jpg'
+        image: aristocratClubImg
       },
       {
         title: 'Private KTV & Acoustic Suite',
@@ -295,11 +301,11 @@ export const FACILITIES_DATA: FacilityLevel[] = [
     tower: 'Baskara',
     tagline: 'Private Aviation Landing Deck & Express Sky Lift',
     description: 'Landasan helikopter privat bersertifikasi ICAO di atap mahkota Tower Baskara, terhubung langsung melalui lift ekspres VVIP menuju Penthouse dan Sky Villa.',
-    image: '/src/assets/images/rooftop_helipad_1792672658134.jpg',
+    image: helipadImg,
     gallery: [
       {
         title: 'VVIP Helipad Deck',
-        image: '/src/assets/images/rooftop_helipad_1792672658134.jpg'
+        image: helipadImg
       },
       {
         title: 'Helipad Observation Sky Lounge',

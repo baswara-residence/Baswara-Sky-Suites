@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Unit, UNITS_DATA } from '../data/units';
 import { UnitFloorPlanVisualizer } from './UnitFloorPlanVisualizer';
-import arunikaImg from '@/src/assets/images/tower_arunika_facade_1792311582736.jpg';
-import baskaraImg from '@/src/assets/images/tower_baskara_facade_1792311582650.jpg';
+import arunikaImg from '../assets/images/tower_arunika_facade_1792311582736.jpg';
+import baskaraImg from '../assets/images/tower_baskara_facade_1792311582650.jpg';
 import {
   Users,
   Maximize2,
@@ -157,6 +157,9 @@ export const UnitExplorer: React.FC<UnitExplorerProps> = ({
                 <img
                   src={arunikaImg}
                   alt="Tower Arunika Modern Luxury Skyscraper"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/tower_arunika_facade_1792311582736.jpg';
+                  }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   referrerPolicy="no-referrer"
                 />
@@ -232,6 +235,9 @@ export const UnitExplorer: React.FC<UnitExplorerProps> = ({
                 <img
                   src={baskaraImg}
                   alt="Tower Baskara Ultra Luxury Skyscraper"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/tower_baskara_facade_1792311582650.jpg';
+                  }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   referrerPolicy="no-referrer"
                 />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Compass, Calculator } from 'lucide-react';
-import heroImage from '@/src/assets/images/hero_sky_suites_1792311582414.jpg';
+import heroImage from '../assets/images/hero_sky_suites_1792311582414.jpg';
 
 interface HeroProps {
   onOpenViewingModal: () => void;
@@ -18,6 +18,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenCalculator, onNavigateToUnits 
           <img
             src={heroImage}
             alt="Baswara Sky Suites Twin Towers at Twilight"
+            onError={(e) => {
+              e.currentTarget.src = '/images/hero_sky_suites_1792311582414.jpg';
+            }}
             className="w-full h-full object-cover object-center scale-105 transition-transform duration-1000"
             referrerPolicy="no-referrer"
           />

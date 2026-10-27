@@ -76,6 +76,9 @@ export const FacilitiesSection: React.FC = () => {
             key={currentImage}
             src={currentImage}
             alt={currentFacility.name}
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=1600&q=80';
+            }}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             referrerPolicy="no-referrer"
           />

@@ -54,3 +54,28 @@ export const formatOfficialInvoiceNumber = (
   // Format: INV/BSS/[A|B]/[MM]/[YYYY]/[NOMOR_URUT]
   return `INV/BSS/${towerCode}/${month}/${year}/${seq}`;
 };
+
+/**
+ * Mengambil nomor urut live dari Google Sheets via backend Netlify API, sehingga nomor urut
+ * selalu sinkron dan berurutan antar semua customer tanpa bentrok atau terulang dari 1.
+ */
+export async function fetchLiveInvoiceSequence(tower: string = 'Arunika'): Promise<{ sequence: number; invoiceNumber: string }> {
+  try {
+    const res = await fetch(`/api/saveBooking?action=getSequence&tower=${encodeURIComponent(tower)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (typeof data.nextSequence === 'number') {
+        localStorage.setItem('bss_invoice_sequence_counter', String(data.nextSequence + 1));
+        const invoiceNum = formatOfficialInvoiceNumber(tower, data.nextSequence);
+        return { sequence: data.nextSequence, invoiceNumber: invoiceNum };
+      }
+    }
+  } catch (err) {
+    console.warn('Fallback sequence local calculation:', err);
+  }
+  const localSeq = getNextInvoiceSequence();
+  return {
+    sequence: localSeq,
+    invoiceNumber: formatOfficialInvoiceNumber(tower, localSeq),
+  };
+}

@@ -32,7 +32,7 @@ const INVOICE_FOLDER_NAME = 'Baswara Sky Suites - Invoices';
 const ADMIN_EMAIL = 'feel.ix.ee@gmail.com';
 
 exports.handler = async function (event, context) {
-  // Handle preflight OPTIONS request
+  // 1. Handle preflight OPTIONS request
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -41,46 +41,95 @@ exports.handler = async function (event, context) {
     };
   }
 
+  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+  const rawPrivateKey = process.env.GOOGLE_PRIVATE_KEY;
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID || '1stru_AZYdNuEfAW6euxwkuYUPbNBCGb38oWEgIKJ03A';
+  const customDriveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+  if (!clientEmail || !rawPrivateKey) {
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: 'GOOGLE_CLIENT_EMAIL atau GOOGLE_PRIVATE_KEY belum diatur di Netlify Environment Variables.',
+        tip: 'Buka Netlify Dashboard -> Site Configuration -> Environment Variables, lalu masukkan kredensial Service Account Anda.',
+      }),
+    };
+  }
+
+  const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: clientEmail,
+      private_key: privateKey,
+    },
+    scopes: [
+      'https://www.googleapis.com/auth/spreadsheets',
+      'https://www.googleapis.com/auth/drive',
+    ],
+  });
+
+  const sheets = google.sheets({ version: 'v4', auth });
+  const drive = google.drive({ version: 'v3', auth });
+
+  // 2. Tentukan target sheet tab
+  let targetSheet = 'Kuesioner & KYC';
+  try {
+    const ssMeta = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetList = (ssMeta.data.sheets || []).map((s) => s.properties?.title || '');
+    if (!sheetList.includes(targetSheet)) {
+      targetSheet = sheetList.length > 0 && sheetList[0] ? sheetList[0] : 'Sheet1';
+    }
+  } catch (metaErr) {
+    console.warn('Metadata query warning:', metaErr.message);
+  }
+
+  // 3. Handle GET: Mengambil nomor urut invoice global berikutnya secara live dari Google Sheets
+  if (event.httpMethod === 'GET') {
+    try {
+      const checkRowsRes = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `'${targetSheet}'!A:A`,
+      });
+      const rows = checkRowsRes.data.values || [];
+      const nextSequence = Math.max(1, rows.length); // Baris 1 adalah header, baris 2 adalah urut 1
+
+      const queryTower = (event.queryStringParameters && event.queryStringParameters.tower) || 'Arunika';
+      const towerCode = queryTower.toLowerCase().includes('arunika') ? 'A' : 'B';
+      const now = new Date();
+      const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+      const yearStr = now.getFullYear();
+      const seqStr = String(nextSequence).padStart(3, '0');
+      const sampleInvoiceNumber = `INV/BSS/${towerCode}/${monthStr}/${yearStr}/${seqStr}`;
+
+      return {
+        statusCode: 200,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({
+          success: true,
+          nextSequence,
+          sampleInvoiceNumber,
+        }),
+      };
+    } catch (err) {
+      return {
+        statusCode: 500,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: err.message, nextSequence: 1 }),
+      };
+    }
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: 'Method Not Allowed. Gunakan POST untuk menyimpan data booking.' }),
+      body: JSON.stringify({ error: 'Method Not Allowed. Gunakan GET untuk nomor urut atau POST untuk menyimpan booking.' }),
     };
   }
 
   try {
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const rawPrivateKey = process.env.GOOGLE_PRIVATE_KEY;
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID || '1stru_AZYdNuEfAW6euxwkuYUPbNBCGb38oWEgIKJ03A';
-
-    if (!clientEmail || !rawPrivateKey) {
-      return {
-        statusCode: 500,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({
-          error: 'GOOGLE_CLIENT_EMAIL atau GOOGLE_PRIVATE_KEY belum diatur di Netlify Site Environment Variables.',
-          tip: 'Buka Netlify Dashboard -> Site Configuration -> Environment Variables, lalu masukkan kredensial Service Account Anda.',
-        }),
-      };
-    }
-
-    const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
-
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: clientEmail,
-        private_key: privateKey,
-      },
-      scopes: [
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive',
-      ],
-    });
-
-    const sheets = google.sheets({ version: 'v4', auth });
-    const drive = google.drive({ version: 'v3', auth });
-
     // Parse booking submission payload
     let data;
     try {
@@ -101,120 +150,7 @@ exports.handler = async function (event, context) {
       };
     }
 
-    // 1. Simpan Invoice ke Google Drive jika terdapat payload gambar JPG base64
-    let driveFileId = null;
-    let driveFileUrl = null;
-    let driveFolderId = null;
-    let driveFolderUrl = null;
-
-    if (data.invoiceBase64 && typeof data.invoiceBase64 === 'string') {
-      try {
-        // Cari atau buat folder "Baswara Sky Suites - Invoices" di Google Drive
-        const folderSearch = await drive.files.list({
-          q: `name = '${INVOICE_FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-          fields: 'files(id, name, webViewLink)',
-          spaces: 'drive',
-        });
-
-        if (folderSearch.data.files && folderSearch.data.files.length > 0) {
-          driveFolderId = folderSearch.data.files[0].id;
-          driveFolderUrl = folderSearch.data.files[0].webViewLink;
-        } else {
-          const createFolderRes = await drive.files.create({
-            requestBody: {
-              name: INVOICE_FOLDER_NAME,
-              mimeType: 'application/vnd.google-apps.folder',
-              description: 'Folder Resmi Penyimpanan Seluruh Invoice Sewa Baswara Sky Suites (PT Baswara Mangkubumi Residence)',
-            },
-            fields: 'id, webViewLink',
-          });
-          driveFolderId = createFolderRes.data.id;
-          driveFolderUrl = createFolderRes.data.webViewLink;
-
-          // Berikan izin akses folder ke akun admin jika memungkinkan
-          try {
-            await drive.permissions.create({
-              fileId: driveFolderId,
-              requestBody: {
-                role: 'writer',
-                type: 'user',
-                emailAddress: ADMIN_EMAIL,
-              },
-            });
-          } catch (permErr) {
-            console.info('Folder permission to admin note:', permErr.message);
-          }
-        }
-
-        // Siapkan buffer gambar JPG dari Base64
-        const cleanBase64 = data.invoiceBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-        const imageBuffer = Buffer.from(cleanBase64, 'base64');
-        const imageStream = new Readable();
-        imageStream.push(imageBuffer);
-        imageStream.push(null);
-
-        const safeInvoiceNo = (data.invoiceNumber || 'INV').replace(/\//g, '_');
-        const safeName = (data.fullName || 'Tenant').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const fileName = `Invoice_${safeInvoiceNo}_${safeName}.jpg`;
-
-        // Upload file JPG ke dalam folder Google Drive
-        const fileUploadRes = await drive.files.create({
-          requestBody: {
-            name: fileName,
-            parents: driveFolderId ? [driveFolderId] : undefined,
-            description: `Official Invoice Sewa ${data.invoiceNumber || ''} untuk ${data.fullName || ''} (Format JPG)`,
-            mimeType: 'image/jpeg',
-          },
-          media: {
-            mimeType: 'image/jpeg',
-            body: imageStream,
-          },
-          fields: 'id, name, webViewLink, webContentLink',
-        });
-
-        driveFileId = fileUploadRes.data.id;
-        driveFileUrl = fileUploadRes.data.webViewLink;
-
-        // Jadikan file dapat dilihat melalui tautan langsung (reader for anyone with link)
-        try {
-          await drive.permissions.create({
-            fileId: driveFileId,
-            requestBody: {
-              role: 'reader',
-              type: 'anyone',
-            },
-          });
-        } catch (permErr) {
-          console.info('File reader permission note:', permErr.message);
-        }
-      } catch (driveErr) {
-        console.error('Error uploading invoice JPG to Google Drive:', driveErr);
-      }
-    }
-
-    // 2. Simpan Baris Data Booking & Invoice ke Google Sheets
-    // Periksa daftar tab di spreadsheet
-    const ssMeta = await sheets.spreadsheets.get({ spreadsheetId });
-    const sheetList = (ssMeta.data.sheets || []).map((s) => s.properties?.title || '');
-    
-    let targetSheet = 'Kuesioner & KYC';
-    if (!sheetList.includes(targetSheet)) {
-      if (sheetList.length > 0 && sheetList[0]) {
-        targetSheet = sheetList[0];
-      } else {
-        targetSheet = 'Sheet1';
-      }
-    }
-
-    // Format co-tenants summary
-    let coTenantsSummary = '-';
-    if (Array.isArray(data.coTenants) && data.coTenants.length > 0) {
-      coTenantsSummary = data.coTenants
-        .map((c, i) => `${i + 1}. ${c.name || 'Tanpa Nama'} (${c.xHandle || '-'}) - FC: ${c.faceClaim || '-'}, TTL: ${c.birthPlaceDate || '-'}`)
-        .join(' | ');
-    }
-
-    // Periksa apakah baris judul header sudah tersedia di sheet
+    // 4. Pastikan header sudah ada di Google Sheets
     const checkHeaderRes = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: `'${targetSheet}'!A1:R1`,
@@ -232,16 +168,136 @@ exports.handler = async function (event, context) {
       });
     }
 
+    // 5. HITUNG NOMOR URUT RESMI SECARA GLOBAL DARI JUMLAH BARIS SPREADSHEET
+    // Ini menjamin nomor urut tidak pernah sama antara customer yang isi di beda device/waktu!
+    const allRowsRes = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `'${targetSheet}'!A:A`,
+    });
+    const currentRowsCount = (allRowsRes.data.values || []).length;
+    // Jika ada 1 baris header, booking pertama adalah nomor 1. Jika ada 2 baris (header + booking 1), berikutnya nomor 2.
+    const globalSeqNumber = Math.max(1, currentRowsCount);
+
+    const towerCode = (data.tower || 'Arunika').toLowerCase().includes('arunika') ? 'A' : 'B';
+    const now = new Date();
+    const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+    const yearStr = now.getFullYear();
+    const seqFormatted = String(globalSeqNumber).padStart(3, '0');
+    const guaranteedInvoiceNumber = `INV/BSS/${towerCode}/${monthStr}/${yearStr}/${seqFormatted}`;
+
+    // Gunakan nomor invoice berurutan yang dihitung server
+    data.invoiceNumber = guaranteedInvoiceNumber;
+
+    // 6. Simpan Invoice JPG ke Google Drive
+    let driveFileId = null;
+    let driveFileUrl = null;
+    let driveFolderId = customDriveFolderId || null;
+    let driveFolderUrl = null;
+
+    if (data.invoiceBase64 && typeof data.invoiceBase64 === 'string') {
+      try {
+        // Jika belum ada folder ID spesifik dari env var, cari atau buat folder di Drive
+        if (!driveFolderId) {
+          const folderSearch = await drive.files.list({
+            q: `name = '${INVOICE_FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+            fields: 'files(id, name, webViewLink)',
+            spaces: 'drive',
+          });
+
+          if (folderSearch.data.files && folderSearch.data.files.length > 0) {
+            driveFolderId = folderSearch.data.files[0].id;
+            driveFolderUrl = folderSearch.data.files[0].webViewLink;
+          } else {
+            const createFolderRes = await drive.files.create({
+              requestBody: {
+                name: INVOICE_FOLDER_NAME,
+                mimeType: 'application/vnd.google-apps.folder',
+                description: 'Folder Resmi Penyimpanan Seluruh Invoice Sewa Baswara Sky Suites (PT Baswara Mangkubumi Residence)',
+              },
+              fields: 'id, webViewLink',
+            });
+            driveFolderId = createFolderRes.data.id;
+            driveFolderUrl = createFolderRes.data.webViewLink;
+
+            // Beri akses editor ke email admin agar folder langsung muncul di Google Drive admin
+            try {
+              await drive.permissions.create({
+                fileId: driveFolderId,
+                requestBody: {
+                  role: 'writer',
+                  type: 'user',
+                  emailAddress: ADMIN_EMAIL,
+                },
+              });
+            } catch (shareErr) {
+              console.info('Share folder to admin note:', shareErr.message);
+            }
+          }
+        } else {
+          driveFolderUrl = `https://drive.google.com/drive/folders/${driveFolderId}`;
+        }
+
+        // Siapkan stream buffer JPG
+        const cleanBase64 = data.invoiceBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+        const imageBuffer = Buffer.from(cleanBase64, 'base64');
+        const imageStream = new Readable();
+        imageStream.push(imageBuffer);
+        imageStream.push(null);
+
+        const safeInvoiceNo = guaranteedInvoiceNumber.replace(/\//g, '_');
+        const safeName = (data.fullName || 'Tenant').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const fileName = `Invoice_${safeInvoiceNo}_${safeName}.jpg`;
+
+        // Upload file JPG
+        const fileUploadRes = await drive.files.create({
+          requestBody: {
+            name: fileName,
+            parents: driveFolderId ? [driveFolderId] : undefined,
+            description: `Official Invoice Sewa ${guaranteedInvoiceNumber} untuk ${data.fullName || ''} (Format JPG)`,
+            mimeType: 'image/jpeg',
+          },
+          media: {
+            mimeType: 'image/jpeg',
+            body: imageStream,
+          },
+          fields: 'id, name, webViewLink, webContentLink',
+        });
+
+        driveFileId = fileUploadRes.data.id;
+        driveFileUrl = fileUploadRes.data.webViewLink;
+
+        // Jadikan file JPG bisa diakses via tautan
+        try {
+          await drive.permissions.create({
+            fileId: driveFileId,
+            requestBody: {
+              role: 'reader',
+              type: 'anyone',
+            },
+          });
+        } catch (permErr) {
+          console.info('File permission note:', permErr.message);
+        }
+      } catch (driveErr) {
+        console.error('Error uploading invoice JPG to Google Drive:', driveErr);
+      }
+    }
+
+    // 7. Format data untuk disimpan ke baris Google Sheets
+    let coTenantsSummary = '-';
+    if (Array.isArray(data.coTenants) && data.coTenants.length > 0) {
+      coTenantsSummary = data.coTenants
+        .map((c, i) => `${i + 1}. ${c.name || 'Tanpa Nama'} (${c.xHandle || '-'}) - FC: ${c.faceClaim || '-'}, TTL: ${c.birthPlaceDate || '-'}`)
+        .join(' | ');
+    }
+
     const timestampWIB = new Date().toLocaleString('id-ID', {
       timeZone: 'Asia/Jakarta',
       dateStyle: 'full',
       timeStyle: 'medium',
     });
 
-    let invoiceInfo = data.invoiceNumber
-      ? `${data.invoiceNumber} (${data.tenureMonths || 1} bln - Rp ${Number(data.initialTotalUpfront || 0).toLocaleString('id-ID')})`
-      : 'Belum diterbitkan';
-
+    let invoiceInfo = `${guaranteedInvoiceNumber} (${data.tenureMonths || 1} bln - Rp ${Number(data.initialTotalUpfront || 0).toLocaleString('id-ID')})`;
     if (driveFileUrl) {
       invoiceInfo += ` | Google Drive JPG: ${driveFileUrl}`;
     }
@@ -271,7 +327,7 @@ exports.handler = async function (event, context) {
       'MENUNGGU_REVIEW',
     ];
 
-    // Tambahkan baris reservasi baru ke Google Sheets
+    // 8. Append baris reservasi baru ke Google Sheets
     const appendResult = await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `'${targetSheet}'!A:R`,
@@ -288,6 +344,8 @@ exports.handler = async function (event, context) {
       body: JSON.stringify({
         success: true,
         message: 'Data reservasi & invoice JPG berhasil disimpan ke Google Sheets dan Google Drive!',
+        officialInvoiceNumber: guaranteedInvoiceNumber,
+        globalSequence: globalSeqNumber,
         spreadsheetId,
         spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
         driveFileId,
