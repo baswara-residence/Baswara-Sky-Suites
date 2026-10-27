@@ -68,6 +68,7 @@ const HEADERS = [
   'Link Thread / Utas Karakter',
   'Persetujuan Rules & Tanda Tangan',
   'Invoice / Masa Sewa',
+  'Link Invoice JPG (Google Drive)',
   'Status KYC',
 ];
 
@@ -228,12 +229,13 @@ export async function saveBookingToGoogleSheets(
       booking.characterThreadLink || '-',
       booking.rulesAgreed ? `Disetujui [TTD: ${booking.signatureName} - ${booking.signatureDate}]` : 'Belum Disetujui',
       invoiceInfo,
+      booking.invoiceBase64 ? 'Tersimpan di Google Drive' : '-',
       'Menunggu Verifikasi (Pending KYC Tahap 2)',
     ];
 
     const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet.id}/values/${encodeURIComponent(
       SHEET_TAB_NAME
-    )}!A:R:append?valueInputOption=USER_ENTERED`;
+    )}!A:S:append?valueInputOption=USER_ENTERED`;
 
     const appendRes = await fetch(appendUrl, {
       method: 'POST',

@@ -98,6 +98,25 @@ async function startServer() {
     }
   });
 
+  app.all('/api/uploadInvoice', async (req, res) => {
+    try {
+      const uploadMod = await import('./netlify/functions/uploadInvoice.cjs');
+      const handler = (uploadMod as any).default?.handler || (uploadMod as any).handler;
+      const event = {
+        httpMethod: req.method,
+        headers: req.headers,
+        queryStringParameters: req.query,
+        body: typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {}),
+      };
+      const result = await handler(event, {});
+      const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+      res.status(result.statusCode || 200).set(result.headers || {}).json(parsedBody);
+    } catch (err: any) {
+      console.error('Error invoking uploadInvoice handler in server.ts:', err);
+      res.status(500).json({ error: err.message || 'Internal error in uploadInvoice function' });
+    }
+  });
+
   // Multimodal Interior & Furniture Scanner Endpoint
   app.post('/api/scanner/analyze', async (req, res) => {
     try {

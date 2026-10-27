@@ -25,6 +25,7 @@ const DEFAULT_HEADERS = [
   'Link Thread / Utas Karakter',
   'Persetujuan Rules & Tanda Tangan',
   'Invoice / Masa Sewa',
+  'Link Invoice JPG (Google Drive)', // Kolom khusus link file JPG di Google Drive
   'Status KYC',
 ];
 
@@ -85,7 +86,7 @@ exports.handler = async function (event, context) {
     console.warn('Metadata query warning:', metaErr.message);
   }
 
-  // 3. Handle GET: Mengambil nomor urut invoice global berikutnya secara live dari Google Sheets
+  // 3. Handle GET: Mengambil nomor urut invoice global berikutnya secara live dari baris Google Sheets
   if (event.httpMethod === 'GET') {
     try {
       const checkRowsRes = await sheets.spreadsheets.values.get({
@@ -150,17 +151,17 @@ exports.handler = async function (event, context) {
       };
     }
 
-    // 4. Pastikan header sudah ada di Google Sheets
+    // 4. Pastikan header sudah ada di Google Sheets (termasuk kolom baru Link Invoice JPG)
     const checkHeaderRes = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `'${targetSheet}'!A1:R1`,
+      range: `'${targetSheet}'!A1:S1`,
     });
 
     const existingHeader = checkHeaderRes.data.values;
-    if (!existingHeader || existingHeader.length === 0 || existingHeader[0].length === 0) {
+    if (!existingHeader || existingHeader.length === 0 || existingHeader[0].length < DEFAULT_HEADERS.length) {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `'${targetSheet}'!A1:R1`,
+        range: `'${targetSheet}'!A1:S1`,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: [DEFAULT_HEADERS],
@@ -168,14 +169,12 @@ exports.handler = async function (event, context) {
       });
     }
 
-    // 5. HITUNG NOMOR URUT RESMI SECARA GLOBAL DARI JUMLAH BARIS SPREADSHEET
-    // Ini menjamin nomor urut tidak pernah sama antara customer yang isi di beda device/waktu!
+    // 5. Hitung nomor urut resmi secara global dari jumlah baris spreadsheet
     const allRowsRes = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: `'${targetSheet}'!A:A`,
     });
     const currentRowsCount = (allRowsRes.data.values || []).length;
-    // Jika ada 1 baris header, booking pertama adalah nomor 1. Jika ada 2 baris (header + booking 1), berikutnya nomor 2.
     const globalSeqNumber = Math.max(1, currentRowsCount);
 
     const towerCode = (data.tower || 'Arunika').toLowerCase().includes('arunika') ? 'A' : 'B';
@@ -185,18 +184,16 @@ exports.handler = async function (event, context) {
     const seqFormatted = String(globalSeqNumber).padStart(3, '0');
     const guaranteedInvoiceNumber = `INV/BSS/${towerCode}/${monthStr}/${yearStr}/${seqFormatted}`;
 
-    // Gunakan nomor invoice berurutan yang dihitung server
     data.invoiceNumber = guaranteedInvoiceNumber;
 
-    // 6. Simpan Invoice JPG ke Google Drive
+    // 6. Simpan Invoice JPG ke Google Drive jika terdapat payload gambar
     let driveFileId = null;
-    let driveFileUrl = null;
-    let driveFolderId = customDriveFolderId || null;
+    let driveFileUrl = data.driveFileUrl || null; // Gunakan driveFileUrl jika sudah di-upload sebelumnya
+    let driveFolderId = customDriveFolderId && customDriveFolderId.trim() !== '' ? customDriveFolderId.trim() : null;
     let driveFolderUrl = null;
 
-    if (data.invoiceBase64 && typeof data.invoiceBase64 === 'string') {
+    if (!driveFileUrl && data.invoiceBase64 && typeof data.invoiceBase64 === 'string') {
       try {
-        // Jika belum ada folder ID spesifik dari env var, cari atau buat folder di Drive
         if (!driveFolderId) {
           const folderSearch = await drive.files.list({
             q: `name = '${INVOICE_FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
@@ -219,7 +216,7 @@ exports.handler = async function (event, context) {
             driveFolderId = createFolderRes.data.id;
             driveFolderUrl = createFolderRes.data.webViewLink;
 
-            // Beri akses editor ke email admin agar folder langsung muncul di Google Drive admin
+            // Beri akses ke email admin
             try {
               await drive.permissions.create({
                 fileId: driveFolderId,
@@ -230,7 +227,7 @@ exports.handler = async function (event, context) {
                 },
               });
             } catch (shareErr) {
-              console.info('Share folder to admin note:', shareErr.message);
+              console.info('Share folder note:', shareErr.message);
             }
           }
         } else {
@@ -266,7 +263,7 @@ exports.handler = async function (event, context) {
         driveFileId = fileUploadRes.data.id;
         driveFileUrl = fileUploadRes.data.webViewLink;
 
-        // Jadikan file JPG bisa diakses via tautan
+        // Jadikan file JPG bisa dibuka oleh siapa saja yang memiliki link
         try {
           await drive.permissions.create({
             fileId: driveFileId,
@@ -283,7 +280,7 @@ exports.handler = async function (event, context) {
       }
     }
 
-    // 7. Format data untuk disimpan ke baris Google Sheets
+    // 7. Format baris tabel untuk disimpan ke Google Sheets (19 Kolom: A sampai S)
     let coTenantsSummary = '-';
     if (Array.isArray(data.coTenants) && data.coTenants.length > 0) {
       coTenantsSummary = data.coTenants
@@ -297,40 +294,43 @@ exports.handler = async function (event, context) {
       timeStyle: 'medium',
     });
 
-    let invoiceInfo = `${guaranteedInvoiceNumber} (${data.tenureMonths || 1} bln - Rp ${Number(data.initialTotalUpfront || 0).toLocaleString('id-ID')})`;
-    if (driveFileUrl) {
-      invoiceInfo += ` | Google Drive JPG: ${driveFileUrl}`;
-    }
+    const invoiceInfo = `${guaranteedInvoiceNumber} (${data.tenureMonths || 1} bln - Rp ${Number(data.initialTotalUpfront || 0).toLocaleString('id-ID')})`;
+
+    // Kolom 18: Link Google Drive (menggunakan hyperlink clickable di spreadsheet)
+    const driveCellFormula = driveFileUrl
+      ? `=HYPERLINK("${driveFileUrl}"; "Lihat Invoice JPG di Google Drive")`
+      : 'Belum diunggah';
 
     const rulesSignatureInfo = data.rulesAgreed
       ? `Disetujui (${data.signatureName || data.fullName} - ${data.signatureDate || new Date().toISOString().split('T')[0]})`
       : 'Belum';
 
     const rowValues = [
-      timestampWIB,
-      data.fullName || '-',
-      data.xHandle || '-',
-      data.faceClaim || '-',
-      data.birthPlaceDate || '-',
-      data.occupation || '-',
-      data.hasPets ? 'Ya' : 'Tidak',
-      data.petsDescription || '-',
-      data.unitName || '-',
-      data.tower || '-',
-      data.isLivingAlone ? 'Tinggal Sendiri (Single Occupancy)' : 'Bersama Co-Tenant',
-      data.coTenants ? String(data.coTenants.length) : '0',
-      coTenantsSummary,
-      data.storyLine || '-',
-      data.characterThreadLink || '-',
-      rulesSignatureInfo,
-      invoiceInfo,
-      'MENUNGGU_REVIEW',
+      timestampWIB,                     // A: Waktu Pendaftaran
+      data.fullName || '-',             // B: Nama Lengkap
+      data.xHandle || '-',              // C: Username X (Twitter)
+      data.faceClaim || '-',            // D: Face Claim
+      data.birthPlaceDate || '-',       // E: Tempat, Tanggal Lahir
+      data.occupation || '-',           // F: Pekerjaan
+      data.hasPets ? 'Ya' : 'Tidak',    // G: Peliharaan (Pets)
+      data.petsDescription || '-',      // H: Rincian Peliharaan
+      data.unitName || '-',             // I: Pilihan Unit
+      data.tower || '-',                // J: Tower
+      data.isLivingAlone ? 'Tinggal Sendiri (Single Occupancy)' : 'Bersama Co-Tenant', // K: Status Hunian
+      data.coTenants ? String(data.coTenants.length) : '0',                           // L: Jumlah Penyewa Tambahan
+      coTenantsSummary,                 // M: Identitas Penyewa Tambahan
+      data.storyLine || '-',            // N: Story Line Singkat
+      data.characterThreadLink || '-',  // O: Link Thread / Utas Karakter
+      rulesSignatureInfo,               // P: Persetujuan Rules & Tanda Tangan
+      invoiceInfo,                      // Q: Invoice / Masa Sewa
+      driveCellFormula,                 // R: Link Invoice JPG (Google Drive) <-- KOLOM DEDIKASI
+      'MENUNGGU_REVIEW',                // S: Status KYC
     ];
 
-    // 8. Append baris reservasi baru ke Google Sheets
+    // 8. Append baris reservasi baru ke Google Sheets (Range A:S)
     const appendResult = await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: `'${targetSheet}'!A:R`,
+      range: `'${targetSheet}'!A:S`,
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {
@@ -343,7 +343,7 @@ exports.handler = async function (event, context) {
       headers: CORS_HEADERS,
       body: JSON.stringify({
         success: true,
-        message: 'Data reservasi & invoice JPG berhasil disimpan ke Google Sheets dan Google Drive!',
+        message: 'Data reservasi & link invoice JPG berhasil disimpan ke Google Sheets dan Google Drive!',
         officialInvoiceNumber: guaranteedInvoiceNumber,
         globalSequence: globalSeqNumber,
         spreadsheetId,
