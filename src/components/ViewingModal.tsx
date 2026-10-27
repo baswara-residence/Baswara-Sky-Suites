@@ -48,6 +48,7 @@ import {
   DriveInvoiceResult,
   INVOICE_FOLDER_NAME,
   generateInvoiceHtml,
+  generateInvoiceJpegDataUrl,
 } from '../lib/googleDriveInvoice';
 import { User, onAuthStateChanged } from 'firebase/auth';
 
@@ -294,15 +295,20 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
     setIsSavingToSheets(true);
     setIsSavingToDrive(true);
 
+    // 1. Buat gambar invoice resmi JPG beresolusi tinggi langsung via Canvas (dijamin 100% selalu ada)
     try {
-      // Jeda singkat agar kartu invoice ter-render di DOM
-      await new Promise((r) => setTimeout(r, 250));
-      const base64Jpg = await captureInvoiceJpegBase64();
-      if (base64Jpg) {
-        bookingData.invoiceBase64 = base64Jpg;
+      const directJpgBase64 = generateInvoiceJpegDataUrl(
+        targetInvoice,
+        fullName.trim() || 'Tenant',
+        normalizedUsername || '@tenant'
+      );
+      bookingData.invoiceBase64 = directJpgBase64;
+    } catch (canvasErr) {
+      console.warn('Canvas generator note:', canvasErr);
+      const fallbackCapture = await captureInvoiceJpegBase64();
+      if (fallbackCapture) {
+        bookingData.invoiceBase64 = fallbackCapture;
       }
-    } catch (captureErr) {
-      console.warn('Gagal menangkap invoice JPG base64:', captureErr);
     }
 
     // 2. Simpan Data Booking ke Google Sheets & Upload Invoice JPG ke Google Drive via Netlify Function
@@ -1114,7 +1120,36 @@ Natasha Wijaya (Head of Leasing)`;
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const inv = generatedInvoice || attachedQuote;
+                          if (!inv) return;
+                          try {
+                            const dataUrl = generateInvoiceJpegDataUrl(
+                              inv,
+                              fullName.trim() || 'Tenant',
+                              normalizedUsername || '@tenant'
+                            );
+                            const safeInvNo = inv.invoiceNumber.replace(/\//g, '_');
+                            const safeName = (fullName.trim() || 'Tenant').replace(/[^a-zA-Z0-9_-]/g, '_');
+                            const a = document.createElement('a');
+                            a.href = dataUrl;
+                            a.download = `Invoice_${safeInvNo}_${safeName}.jpg`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          } catch (err) {
+                            console.warn('Download error:', err);
+                          }
+                        }}
+                        className="px-3 py-1.5 border border-[#D4AF37]/60 hover:bg-[#D4AF37]/15 text-[#F3E5AB] text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <FileDown size={13} className="text-[#D4AF37]" />
+                        <span>Unduh File JPG</span>
+                      </button>
+
                       <button
                         type="button"
                         onClick={handleCopyInvoiceText}

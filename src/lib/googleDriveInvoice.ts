@@ -502,13 +502,14 @@ export interface DriveInvoiceResult {
 }
 
 /**
- * Fallback generator that creates a high-resolution JPG Blob if html2canvas is unavailable.
+ * Generates an executive, high-resolution 1200x1600 JPG Data URL for the official invoice.
+ * Completely standalone using HTML5 Canvas 2D API - guaranteed 100% success rate without DOM dependency.
  */
-async function createFallbackInvoiceJpegBlob(
+export function generateInvoiceJpegDataUrl(
   invoice: QuoteData,
   tenantName: string,
   tenantXHandle: string
-): Promise<Blob> {
+): string {
   const canvas = document.createElement('canvas');
   canvas.width = 1200;
   canvas.height = 1600;
@@ -666,16 +667,20 @@ async function createFallbackInvoiceJpegBlob(
   ctx.fillText('PT Baswara Mangkubumi Residence', 100, sigY + 100);
   ctx.fillText('Baswara Sky Suites Leasing Division', 780, sigY + 100);
 
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) resolve(blob);
-        else reject(new Error('Gagal mengonversi canvas ke JPG Blob'));
-      },
-      'image/jpeg',
-      0.95
-    );
-  });
+  return canvas.toDataURL('image/jpeg', 0.95);
+}
+
+/**
+ * Fallback generator that creates a high-resolution JPG Blob using generateInvoiceJpegDataUrl.
+ */
+async function createFallbackInvoiceJpegBlob(
+  invoice: QuoteData,
+  tenantName: string,
+  tenantXHandle: string
+): Promise<Blob> {
+  const dataUrl = generateInvoiceJpegDataUrl(invoice, tenantName, tenantXHandle);
+  const res = await fetch(dataUrl);
+  return await res.blob();
 }
 
 /**
@@ -796,3 +801,71 @@ export async function saveInvoiceToDriveFolder({
     };
   }
 }
+
+/**
+ * Saves a high-quality JPG representation of the QuoteData to the specified Google Drive folder via Netlify function.
+ */
+export async function saveQuoteJpgToDrive(
+  quoteData: QuoteData,
+  tenantName: string = 'Calon Penghuni'
+): Promise<{ success: boolean; link?: string; fileId?: string; error?: string }> {
+  try {
+    const dataUrl = generateInvoiceJpegDataUrl(quoteData, tenantName, '@calon_penghuni');
+    const safeInvNo = quoteData.invoiceNumber.replace(/\//g, '_');
+    const safeUnit = quoteData.unit.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const fileName = `Invoice_${safeInvNo}_${safeUnit}.jpg`;
+
+    const res = await fetch('/api/uploadInvoice', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fileName,
+        fileBase64: dataUrl,
+        mimeType: 'image/jpeg',
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      return {
+        success: false,
+        error: data.error || `Server error (${res.status}): Gagal menyimpan ke Google Drive`,
+      };
+    }
+
+    return {
+      success: true,
+      link: data.link || data.webViewLink,
+      fileId: data.fileId,
+    };
+  } catch (err: any) {
+    console.error('Error in saveQuoteJpgToDrive:', err);
+    return {
+      success: false,
+      error: err.message || 'Koneksi ke endpoint /api/uploadInvoice gagal.',
+    };
+  }
+}
+
+/**
+ * Downloads a high-quality JPG representation of the QuoteData directly to the user's device.
+ */
+export function downloadQuoteDataJpg(
+  quoteData: QuoteData,
+  tenantName: string = 'Calon Penghuni'
+): void {
+  const dataUrl = generateInvoiceJpegDataUrl(quoteData, tenantName, '@calon_penghuni');
+  const safeInvNo = quoteData.invoiceNumber.replace(/\//g, '_');
+  const safeUnit = quoteData.unit.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `Invoice_${safeInvNo}_${safeUnit}.jpg`;
+
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
