@@ -122,6 +122,8 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
   // Form states
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedBank, setCopiedBank] = useState(false);
+  const [copiedTweet, setCopiedTweet] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Google Workspace state
@@ -167,14 +169,13 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
     }
   }, [maxCoTenants, coTenants.length]);
 
-  if (!isOpen) return null;
-
-  const formatRupiah = (val: number) => {
+  const formatRupiah = (val?: number | null) => {
+    const num = typeof val === 'number' && !isNaN(val) ? val : 0;
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       maximumFractionDigits: 0,
-    }).format(val);
+    }).format(num);
   };
 
   // Helper to normalize and ensure x.com/ format
@@ -635,9 +636,6 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const [copiedBank, setCopiedBank] = useState(false);
-  const [copiedTweet, setCopiedTweet] = useState(false);
-
   const handleCopyBank = () => {
     const text = `${OFFICIAL_BANK_INFO.bankName} - ${OFFICIAL_BANK_INFO.accountNumber} (a/n ${OFFICIAL_BANK_INFO.accountHolder})`;
     navigator.clipboard.writeText(text);
@@ -660,6 +658,8 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
       downloadQuoteDataJpg(inv, fullName.trim() || 'Tenant', normalizedUsername || '@tenant');
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -698,7 +698,7 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                       Terkoneksi dengan Invoice Resmi #{attachedQuote.invoiceNumber}
                     </p>
                     <p className="text-slate-400 mt-0.5">
-                      Unit: {attachedQuote.unit.name} ({attachedQuote.tenureMonths} Bulan) · Total Nilai Sewa: {formatRupiah(attachedQuote.totalContractValue || attachedQuote.initialTotalUpfront)}
+                      Unit: {attachedQuote.unit?.name || currentUnit.name} ({attachedQuote.tenureMonths || 3} Bulan) · Total Nilai Sewa: {formatRupiah(attachedQuote.totalContractValue || attachedQuote.initialTotalUpfront || 0)}
                     </p>
                   </div>
                 </div>

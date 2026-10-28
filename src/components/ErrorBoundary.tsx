@@ -28,6 +28,10 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
+  private handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
   public render() {
     if (this.state.hasError) {
       return (
@@ -49,13 +53,22 @@ export class ErrorBoundary extends Component<Props, State> {
               Halaman mengalami kendala saat memuat aset residensial. Silakan muat ulang halaman untuk membuka kembali portal hunian.
             </p>
 
-            <button
-              onClick={this.handleReload}
-              className="w-full py-3.5 px-6 bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#0B0F19] font-medium text-xs tracking-widest uppercase transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(212,175,55,0.25)]"
-            >
-              <RotateCcw size={16} />
-              <span>Muat Ulang Portal</span>
-            </button>
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={this.handleReset}
+                className="w-full py-3 px-6 bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#0B0F19] font-medium text-xs tracking-widest uppercase transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(212,175,55,0.25)]"
+              >
+                <span>Buka Kembali Halaman</span>
+              </button>
+
+              <button
+                onClick={this.handleReload}
+                className="w-full py-2.5 px-6 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-mono text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RotateCcw size={14} />
+                <span>Muat Ulang Portal (Refresh)</span>
+              </button>
+            </div>
           </div>
         </div>
       );
