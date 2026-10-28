@@ -34,6 +34,7 @@ export interface BookingSubmissionData {
   invoiceBase64?: string;
   receiptBase64?: string;
   adminAccessToken?: string;
+  gasUrl?: string;
 }
 
 export interface SaveBookingResult {

@@ -253,6 +253,7 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
       invoiceNumber: overrideInv || generatedInvoice?.invoiceNumber || attachedQuote?.invoiceNumber,
       tenureMonths: overrideTenure || generatedInvoice?.tenureMonths || attachedQuote?.tenureMonths || 3,
       initialTotalUpfront: overrideUpfront || generatedInvoice?.initialTotalUpfront || attachedQuote?.initialTotalUpfront,
+      gasUrl: (typeof window !== 'undefined' ? localStorage.getItem('baswara_gas_url') : null) || undefined,
     };
   };
 
