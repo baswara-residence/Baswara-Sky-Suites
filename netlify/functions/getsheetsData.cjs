@@ -6,6 +6,15 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
+function formatPrivateKey(rawKey) {
+  if (!rawKey) return '';
+  let key = rawKey.trim();
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+    key = key.slice(1, -1);
+  }
+  return key.replace(/\\n/g, '\n');
+}
+
 exports.handler = async function (event, context) {
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -33,7 +42,7 @@ exports.handler = async function (event, context) {
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: clientEmail,
-        private_key: rawPrivateKey.replace(/\\n/g, '\n'),
+        private_key: formatPrivateKey(rawPrivateKey),
       },
       scopes: [
         'https://www.googleapis.com/auth/spreadsheets.readonly', 
@@ -44,12 +53,21 @@ exports.handler = async function (event, context) {
     const sheets = google.sheets({ version: 'v4', auth });
     
     // Check range requested or default to first 20 rows
-    const range = (event.queryStringParameters && event.queryStringParameters.range) || 'Sheet1!A1:R20';
+    const range = (event.queryStringParameters && event.queryStringParameters.range) || 'Kuesioner & KYC!A1:T50';
 
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
+    let response;
+    try {
+      response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range,
+      });
+    } catch (sheetRangeErr) {
+      // Fallback to Sheet1 or whatever tab exists
+      response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'A1:T50',
+      });
+    }
 
     return {
       statusCode: 200,

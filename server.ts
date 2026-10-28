@@ -37,6 +37,13 @@ async function startServer() {
     updatedAt: '',
   };
 
+  // Serve generated invoices and receipts statically
+  const publicInvoicesPath = path.resolve(__dirname, 'public', 'invoices');
+  if (!fs.existsSync(publicInvoicesPath)) {
+    fs.mkdirSync(publicInvoicesPath, { recursive: true });
+  }
+  app.use('/invoices', express.static(publicInvoicesPath));
+
   app.get('/api/admin/google-token', (_req, res) => {
     res.json({
       connected: Boolean(adminSession.accessToken),
@@ -59,16 +66,43 @@ async function startServer() {
     return res.status(400).json({ error: 'accessToken is required' });
   });
 
+  // Google Drive & Sheets Integration Diagnostic Checker
+  app.get('/api/admin/drive-check', async (req, res) => {
+    try {
+      const driveCheckMod = await import('./netlify/functions/driveCheck.cjs');
+      const handler = (driveCheckMod as any).default?.handler || (driveCheckMod as any).handler;
+      const event = {
+        httpMethod: 'GET',
+        headers: req.headers,
+        queryStringParameters: req.query,
+      };
+      const result = await handler(event, {});
+      const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+      res.status(result.statusCode || 200).set(result.headers || {}).json(parsedBody);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Netlify Serverless Functions compatibility routes for local development
   app.all('/api/saveBooking', async (req, res) => {
     try {
       const saveBookingMod = await import('./netlify/functions/saveBooking.cjs');
       const handler = (saveBookingMod as any).default?.handler || (saveBookingMod as any).handler;
+
+      let bodyData = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+      if (!bodyData.adminAccessToken && adminSession.accessToken) {
+        bodyData.adminAccessToken = adminSession.accessToken;
+      }
+
       const event = {
         httpMethod: req.method,
-        headers: req.headers,
+        headers: {
+          ...req.headers,
+          authorization: req.headers.authorization || (adminSession.accessToken ? `Bearer ${adminSession.accessToken}` : undefined),
+        },
         queryStringParameters: req.query,
-        body: typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {}),
+        body: JSON.stringify(bodyData),
       };
       const result = await handler(event, {});
       const parsedBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;

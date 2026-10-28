@@ -32,6 +32,8 @@ export interface BookingSubmissionData {
   initialTotalUpfront?: number;
   specialNotes?: string;
   invoiceBase64?: string;
+  receiptBase64?: string;
+  adminAccessToken?: string;
 }
 
 export interface SaveBookingResult {
@@ -40,8 +42,11 @@ export interface SaveBookingResult {
   spreadsheetUrl?: string;
   driveFileId?: string;
   driveFileUrl?: string;
+  receiptFileId?: string;
+  receiptFileUrl?: string;
   driveFolderUrl?: string;
   officialInvoiceNumber?: string;
+  officialReceiptNumber?: string;
   globalSequence?: number;
   isNewSpreadsheet?: boolean;
   error?: string;
@@ -68,8 +73,9 @@ const HEADERS = [
   'Link Thread / Utas Karakter',
   'Persetujuan Rules & Tanda Tangan',
   'Invoice / Masa Sewa',
-  'Link Invoice JPG (Google Drive)',
-  'Status KYC',
+  'Link Invoice Belum Lunas (Google Drive)',
+  'Link Kuitansi Lunas (Google Drive)',
+  'Status Pembayaran & KYC',
 ];
 
 /**
@@ -321,8 +327,11 @@ export async function saveBookingViaNetlify(
       spreadsheetUrl: data.spreadsheetUrl,
       driveFileId: data.driveFileId,
       driveFileUrl: data.driveFileUrl,
+      receiptFileId: data.receiptFileId,
+      receiptFileUrl: data.receiptFileUrl,
       driveFolderUrl: data.driveFolderUrl,
       officialInvoiceNumber: data.officialInvoiceNumber,
+      officialReceiptNumber: data.officialReceiptNumber,
       globalSequence: data.globalSequence,
     };
   } catch (err: any) {

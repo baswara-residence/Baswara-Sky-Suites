@@ -1,14 +1,49 @@
 [build]
+  command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"
 
-# Proxy API routes to Netlify Serverless Functions
+[build.environment]
+  NODE_VERSION = "20"
+
+# Specific API routes to Netlify Serverless Functions
+[[redirects]]
+  from = "/api/scanner/analyze"
+  to = "/.netlify/functions/scannerAnalyze"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/drive-check"
+  to = "/.netlify/functions/driveCheck"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin/google-token"
+  to = "/.netlify/functions/googleToken"
+  status = 200
+
+[[redirects]]
+  from = "/api/saveBooking"
+  to = "/.netlify/functions/saveBooking"
+  status = 200
+
+[[redirects]]
+  from = "/api/getsheetsData"
+  to = "/.netlify/functions/getsheetsData"
+  status = 200
+
+[[redirects]]
+  from = "/api/uploadInvoice"
+  to = "/.netlify/functions/uploadInvoice"
+  status = 200
+
+# Catch-all for any other Netlify function in netlify/functions/
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Single Page Application fallback for React Router
+# Single Page Application fallback for React Router & client-side routes
 [[redirects]]
   from = "/*"
   to = "/index.html"

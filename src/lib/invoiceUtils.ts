@@ -79,3 +79,40 @@ export async function fetchLiveInvoiceSequence(tower: string = 'Arunika'): Promi
     invoiceNumber: formatOfficialInvoiceNumber(tower, localSeq),
   };
 }
+
+export const formatOfficialReceiptNumber = (
+  tower: 'Arunika' | 'Baskara' | string,
+  seqNumber?: number,
+  date: Date = new Date()
+): string => {
+  const isArunika = tower.toLowerCase().includes('arunika');
+  const towerCode = isArunika ? 'A' : 'B';
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const seq = String(seqNumber ?? getCurrentInvoiceSequence()).padStart(3, '0');
+  return `KWT/BSS/${towerCode}/${month}/${year}/${seq}`;
+};
+
+export const numberToIndonesianWords = (nominal: number): string => {
+  const bilangan = [
+    '', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'
+  ];
+  const num = Math.floor(Math.abs(nominal));
+  if (num === 0) return 'Nol Rupiah';
+  
+  function konversi(n: number): string {
+    if (n < 12) return bilangan[n];
+    if (n < 20) return konversi(n - 10) + ' Belas';
+    if (n < 100) return konversi(Math.floor(n / 10)) + ' Puluh ' + (n % 10 > 0 ? konversi(n % 10) : '');
+    if (n < 200) return 'Seratus ' + (n - 100 > 0 ? konversi(n - 100) : '');
+    if (n < 1000) return konversi(Math.floor(n / 100)) + ' Ratus ' + (n % 100 > 0 ? konversi(n % 100) : '');
+    if (n < 2000) return 'Seribu ' + (n - 1000 > 0 ? konversi(n - 1000) : '');
+    if (n < 1000000) return konversi(Math.floor(n / 1000)) + ' Ribu ' + (n % 1000 > 0 ? konversi(n % 1000) : '');
+    if (n < 1000000000) return konversi(Math.floor(n / 1000000)) + ' Juta ' + (n % 1000000 > 0 ? konversi(n % 1000000) : '');
+    if (n < 1000000000000) return konversi(Math.floor(n / 1000000000)) + ' Miliar ' + (n % 1000000000 > 0 ? konversi(n % 1000000000) : '');
+    return String(n);
+  }
+
+  const hasil = konversi(num).replace(/\s+/g, ' ').trim();
+  return `${hasil} Rupiah`;
+};

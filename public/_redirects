@@ -1,0 +1,8 @@
+/api/scanner/analyze /.netlify/functions/scannerAnalyze 200
+/api/admin/drive-check /.netlify/functions/driveCheck 200
+/api/admin/google-token /.netlify/functions/googleToken 200
+/api/saveBooking /.netlify/functions/saveBooking 200
+/api/getsheetsData /.netlify/functions/getsheetsData 200
+/api/uploadInvoice /.netlify/functions/uploadInvoice 200
+/api/* /.netlify/functions/:splat 200
+/* /index.html 200

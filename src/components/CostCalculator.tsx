@@ -12,8 +12,10 @@ import {
   Sparkles,
   Building2,
   Calendar,
+  Download,
 } from 'lucide-react';
 import { formatOfficialInvoiceNumber, OFFICIAL_BANK_INFO } from '../lib/invoiceUtils';
+import { downloadQuoteDataJpg } from '../lib/googleDriveInvoice';
 
 export interface QuoteData {
   invoiceNumber: string;
@@ -490,6 +492,15 @@ Head of Leasing: Natasha Wijaya
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => downloadQuoteDataJpg(quoteData, 'Calon Penghuni', '@calon_penghuni')}
+                  className="px-3 py-1.5 bg-[#D4AF37]/20 border border-[#D4AF37] hover:bg-[#D4AF37]/30 text-[#F3E5AB] text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Download size={13} />
+                  <span>Unduh File JPG</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleCopyInvoice}
