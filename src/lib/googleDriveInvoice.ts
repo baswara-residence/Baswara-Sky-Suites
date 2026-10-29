@@ -453,6 +453,7 @@ export function generateInvoiceHtml(
     <div style="margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #1E293B;">
       <div class="section-label">Ketentuan Resmi Penagihan & Legalitas Dokumen:</div>
       <div style="background: #0B0F19; border: 1px solid rgba(212, 175, 55, 0.3); padding: 18px; font-size: 12px; color: #CBD5E1; line-height: 1.6;">
+        <p style="margin-bottom: 8px; color: #FBBF24; font-weight: 600;">✦ PENTING: Sebelum melakukan pembayaran, wajib konfirmasi terlebih dahulu ke akun base resmi (@the_BASWARA) untuk memastikan ketersediaan (availability) unit.</p>
         <p style="margin-bottom: 6px;">1. Dokumen invoice ini merupakan bukti penagihan sah yang diterbitkan oleh PT Baswara Mangkubumi Residence.</p>
         <p style="margin-bottom: 6px;">2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.</p>
         <p>3. Serah terima unit hunian dan legalisasi berkas perjanjian sewa resmi berlaku efektif setelah konfirmasi leasing.</p>
@@ -688,22 +689,26 @@ export function generateInvoiceJpegDataUrl(
   ctx.fillText('STATUS: BELUM DIBAYAR (PENDING)', 795, 242);
 
   // Ketentuan Penagihan & Legalitas (Menggantikan cara pembayaran sesuai permintaan)
-  const legalBoxY = totalBoxY + 105;
+  const legalBoxY = totalBoxY + 100;
   ctx.fillStyle = '#111827';
-  ctx.fillRect(80, legalBoxY, 1040, 160);
+  ctx.fillRect(80, legalBoxY, 1040, 165);
   ctx.strokeStyle = '#1E293B';
   ctx.lineWidth = 1;
-  ctx.strokeRect(80, legalBoxY, 1040, 160);
+  ctx.strokeRect(80, legalBoxY, 1040, 165);
 
   ctx.fillStyle = '#D4AF37';
   ctx.font = 'bold 14px monospace';
-  ctx.fillText('KETENTUAN RESMI PENAGIHAN & LEGALITAS DOKUMEN:', 110, legalBoxY + 35);
+  ctx.fillText('KETENTUAN RESMI PENAGIHAN & LEGALITAS DOKUMEN:', 110, legalBoxY + 30);
+
+  ctx.fillStyle = '#FBBF24';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText('✦ PENTING: Sebelum melakukan pembayaran, wajib konfirmasi ke base @the_BASWARA apakah unit available.', 110, legalBoxY + 58);
 
   ctx.fillStyle = '#E2E8F0';
   ctx.font = '14px sans-serif';
-  ctx.fillText('1. Dokumen invoice ini merupakan bukti penagihan sah yang diterbitkan oleh PT Baswara Mangkubumi Residence.', 110, legalBoxY + 68);
-  ctx.fillText('2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.', 110, legalBoxY + 98);
-  ctx.fillText('3. Serah terima unit hunian dan akses kartu resmi diproses setelah verifikasi leasing dikonfirmasi.', 110, legalBoxY + 128);
+  ctx.fillText('1. Dokumen invoice ini merupakan bukti penagihan sah yang diterbitkan oleh PT Baswara Mangkubumi Residence.', 110, legalBoxY + 88);
+  ctx.fillText('2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.', 110, legalBoxY + 116);
+  ctx.fillText('3. Serah terima unit hunian dan akses kartu resmi diproses setelah verifikasi leasing dikonfirmasi.', 110, legalBoxY + 144);
 
   // Official Gold Seal Stamp
   ctx.save();

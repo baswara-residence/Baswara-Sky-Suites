@@ -630,6 +630,7 @@ ${characterThreadLink}
 Tanda Tangan Digital: ${signatureName || fullName} [Verified]
 ========================================
 Status: Pengajuan Telah Dikirim & Sedang Ditinjau Tim Leasing
+PENTING: Sebelum transfer pembayaran, wajib konfirmasi ketersediaan unit ke base: @the_BASWARA
 Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
   };
 
@@ -1115,8 +1116,19 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                   Permohonan Sewa Berhasil Didaftarkan
                 </h3>
                 <p className="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-                  Terima kasih, <strong className="text-white font-medium">{fullName}</strong>. Dokumen invoice resmi untuk unit <strong className="text-[#F3E5AB]">{currentUnit.name} (Tower {currentUnit.tower})</strong> telah diterbitkan. Silakan unduh file invoice di bawah dan lakukan pembayaran via transfer bank.
+                  Terima kasih, <strong className="text-white font-medium">{fullName}</strong>. Dokumen invoice resmi untuk unit <strong className="text-[#F3E5AB]">{currentUnit.name} (Tower {currentUnit.tower})</strong> telah diterbitkan.
                 </p>
+
+                {/* Important Base Confirmation Notice Before Payment */}
+                <div className="p-4 bg-amber-500/10 border-2 border-amber-500/40 text-amber-200 text-xs text-left max-w-xl mx-auto space-y-1.5 shadow-lg">
+                  <div className="flex items-center gap-2 text-amber-300 font-bold uppercase tracking-wider text-[11px] font-mono">
+                    <AlertCircle size={15} className="text-amber-400 shrink-0" />
+                    <span>PENTING: Konfirmasi Ketersediaan Unit Sebelum Transfer</span>
+                  </div>
+                  <p className="text-slate-200 text-xs leading-relaxed">
+                    Sebelum melakukan transfer pembayaran, <strong>mohon konfirmasi terlebih dahulu ke akun base resmi (<a href="https://x.com/the_BASWARA" target="_blank" rel="noopener noreferrer" className="text-[#F3E5AB] underline font-mono hover:text-white">@the_BASWARA</a>)</strong> untuk memastikan apakah unit yang Anda pilih masih <em>available</em> (tersedia) atau tidak.
+                  </p>
+                </div>
               </div>
 
               {/* Action Bar (Download & Copy) */}

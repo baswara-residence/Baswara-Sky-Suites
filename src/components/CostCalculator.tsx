@@ -682,8 +682,8 @@ Head of Leasing: Natasha Wijaya
                       <span className="font-mono text-[#F3E5AB] font-bold text-sm tracking-wider">{OFFICIAL_BANK_INFO.accountNumber}</span>
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-2 font-mono">
-                    *Harap sertakan nomor invoice <strong className="text-slate-200">{invoiceNumber}</strong> pada berita transfer.
+                  <p className="text-[10px] text-amber-300 mt-2 font-mono">
+                    *PENTING: Sebelum transfer, wajib konfirmasi ketersediaan unit ke base @the_BASWARA. Sertakan nomor invoice <strong className="text-slate-200">{invoiceNumber}</strong> pada berita transfer.
                   </p>
                 </div>
 
