@@ -112,7 +112,6 @@ export const AdminDriveStatusModal: React.FC<AdminDriveStatusModalProps> = ({
       const payload = {
         base64: tinyBase64,
         fileName: `Test_Connection_${Date.now()}.jpg`,
-        folderId: '1P7txSenSZUnfOy7QCFLLo6tsPHk3nKjM',
       };
 
       const res = await fetch(trimmed, {
@@ -127,13 +126,20 @@ export const AdminDriveStatusModal: React.FC<AdminDriveStatusModalProps> = ({
         localStorage.setItem('baswara_gas_url', trimmed);
         setGasTestResult({
           success: true,
-          message: 'Koneksi Berhasil! File test berhasil dibuat di Google Drive Anda.',
+          message: 'Koneksi Berhasil! File test berhasil dibuat di Google Drive Anda (folder "Baswara Sky Suites - Invoices").',
           fileUrl: json.url,
         });
       } else {
+        const errMsg = json?.error || `Server merespon dengan status ${res.status}.`;
+        let guidance = '';
+        if (errMsg.includes('Access denied') || errMsg.includes('DriveApp')) {
+          guidance = 'PENTING: Di script.google.com, pilih fungsi "testAuth" lalu klik "Jalankan (Run)". Klik "Tinjau Izin" -> "Lanjutan (Advanced)" -> "Buka Untitled project (tidak aman)" -> "Izinkan". Setelah itu klik Deploy > Manage deployments > Edit > Version: New version!';
+        } else {
+          guidance = 'Pastikan opsi "Who has access" disetel "Anyone" saat deploy Web App.';
+        }
         setGasTestResult({
           success: false,
-          message: json?.error || `Server merespon dengan status ${res.status}. Pastikan opsi "Who has access" disetel "Anyone" saat deploy Web App.`,
+          message: `${errMsg} ${guidance}`,
         });
       }
     } catch (err: any) {
@@ -166,18 +172,14 @@ export const AdminDriveStatusModal: React.FC<AdminDriveStatusModalProps> = ({
   try {
     var data = JSON.parse(e.postData.contents);
     
-    // Cari folder ID yang ditentukan atau otomatis buat folder "Baswara Invoices"
-    var folder;
-    try {
-      folder = DriveApp.getFolderById(data.folderId || "1P7txSenSZUnfOy7QCFLLo6tsPHk3nKjM");
-    } catch(errFolder) {
-      var search = DriveApp.getFoldersByName("Baswara Invoices");
-      folder = search.hasNext() ? search.next() : DriveApp.createFolder("Baswara Invoices");
-    }
+    // Simpan otomatis ke folder "Baswara Sky Suites - Invoices" di Google Drive pribadi Anda
+    var folderName = "Baswara Sky Suites - Invoices";
+    var folders = DriveApp.getFoldersByName(folderName);
+    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
     
     var cleanBase64 = (data.base64 || "").replace(/^data:image\\/[a-z]+;base64,/, "");
     var decoded = Utilities.base64Decode(cleanBase64);
-    var blob = Utilities.newBlob(decoded, "image/jpeg", data.fileName || "Invoice.jpg");
+    var blob = Utilities.newBlob(decoded, "image/jpeg", data.fileName || ("Invoice_" + new Date().getTime() + ".jpg"));
     
     var file = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -196,8 +198,11 @@ export const AdminDriveStatusModal: React.FC<AdminDriveStatusModalProps> = ({
 }
 
 function testAuth() {
-  var root = DriveApp.getRootFolder();
-  Logger.log("Akses Drive Sukses: " + root.getName());
+  // Jalankan fungsi ini di editor Apps Script untuk memicu persetujuan izin pertama kali (OAuth)
+  var folderName = "Baswara Sky Suites - Invoices";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  Logger.log("SUKSES! Akses Google Drive Berhasil Aktif. Folder: " + folder.getName() + " (ID: " + folder.getId() + ")");
 }`;
 
   const handleCopyGas = () => {
@@ -323,14 +328,22 @@ function testAuth() {
             </button>
           </div>
 
-          <p className="text-slate-300 text-[11px] leading-relaxed font-light">
-            1. Buka <strong>script.google.com</strong> dengan akun <code className="text-[#D4AF37]">feel.ix.ee@gmail.com</code>.<br />
-            2. Klik <strong>Project Baru</strong>, hapus kodenya, lalu salin kode di bawah.<br />
-            3. Klik <strong>Deploy</strong> &gt; <strong>New deployment</strong> (Web app, Execute as: <em>Me</em>, Who has access: <em>Anyone</em>).<br />
-            4. Salin URL Web App dan tempel ke kolom di atas.
-          </p>
+          <div className="text-slate-300 text-[11px] leading-relaxed space-y-1.5 font-light">
+            <p>1. Buka <strong className="text-white">script.google.com</strong> login dengan akun <code className="text-[#D4AF37] font-semibold">feel.ix.ee@gmail.com</code>.</p>
+            <p>2. Buat Project Baru (atau buka project yang ada), hapus semua kode bawaan, lalu <strong>tempel kode di bawah</strong>.</p>
+            <p className="p-2 bg-amber-500/10 border border-amber-500/30 text-amber-200">
+              3. <strong className="text-white">PENTING (Mengatasi 'Access denied: DriveApp'):</strong> Di toolbar atas, pilih fungsi <strong className="font-mono text-white">testAuth</strong> lalu klik tombol <strong className="text-white">Jalankan (Run)</strong>.<br />
+              &bull; Muncul kotak <em>"Otorisasi Diperlukan"</em> &rarr; klik <strong className="text-white">Tinjau Izin</strong> &rarr; Pilih akun Anda.<br />
+              &bull; Muncul <em>"Google belum memverifikasi..."</em> &rarr; klik tulisan kecil <strong className="text-[#D4AF37]">Lanjutan (Advanced)</strong> di kiri bawah &rarr; klik <strong className="text-[#D4AF37]">Buka Untitled project (tidak aman)</strong> &rarr; klik <strong className="text-emerald-400">Izinkan (Allow)</strong>.<br />
+              &bull; Di log eksekusi akan muncul status <em>SUKSES</em>.
+            </p>
+            <p>4. Klik <strong className="text-white">Deploy</strong> &gt; <strong className="text-white">New deployment</strong> (atau <em>Manage deployments &gt; Edit &gt; Version: New version</em>).<br />
+              Pilih: <strong>Web app</strong> | Execute as: <strong className="text-[#D4AF37]">Me (feel.ix.ee@gmail.com)</strong> | Who has access: <strong className="text-emerald-400">Anyone (Siapa saja)</strong>.<br />
+              Klik <strong>Deploy</strong>, lalu salin URL Web App yang berakhiran <code className="text-[#F3E5AB]">/exec</code> ke kolom di atas.
+            </p>
+          </div>
 
-          <pre className="p-3 bg-black/60 border border-slate-800 text-slate-300 font-mono text-[10px] overflow-x-auto max-h-36 overflow-y-auto leading-relaxed">
+          <pre className="p-3 bg-black/60 border border-slate-800 text-slate-300 font-mono text-[10px] overflow-x-auto max-h-40 overflow-y-auto leading-relaxed">
             {gasSampleCode}
           </pre>
         </div>

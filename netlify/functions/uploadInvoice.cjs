@@ -24,15 +24,38 @@ function formatPrivateKey(rawKey) {
  * Upload image using Google Apps Script Webhook
  */
 async function uploadViaAppsScript(gasUrl, base64Data, fileName, folderId) {
+  if (!gasUrl || typeof gasUrl !== 'string') return null;
+  const cleanUrl = gasUrl.trim();
+  if (!cleanUrl.startsWith('http')) return null;
+
+  const postData = JSON.stringify({
+    base64: base64Data,
+    fileName,
+    folderId,
+  });
+
+  if (typeof fetch === 'function') {
+    try {
+      const res = await fetch(cleanUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: postData,
+        redirect: 'follow',
+      });
+      const parsed = await res.json();
+      if (parsed && parsed.success) {
+        return parsed;
+      }
+    } catch (fetchErr) {
+      console.warn('Apps Script uploadInvoice fetch warning:', fetchErr.message);
+    }
+  }
+
   return new Promise((resolve) => {
     try {
-      const urlObj = new URL(gasUrl);
-      const postData = JSON.stringify({
-        base64: base64Data,
-        fileName,
-        folderId,
-      });
-
+      const urlObj = new URL(cleanUrl);
       const req = https.request(
         urlObj,
         {

@@ -49,15 +49,40 @@ function formatPrivateKey(rawKey) {
  * Upload image using Google Apps Script Webhook (bypasses Service Account 0GB quota completely)
  */
 async function uploadViaAppsScript(gasUrl, base64Data, fileName, folderId) {
+  if (!gasUrl || typeof gasUrl !== 'string') return null;
+  const cleanUrl = gasUrl.trim();
+  if (!cleanUrl.startsWith('http')) return null;
+
+  const postData = JSON.stringify({
+    base64: base64Data,
+    fileName,
+    folderId,
+  });
+
+  // Method 1: Use native fetch in Node 18+ (automatically follows Google 302 redirects)
+  if (typeof fetch === 'function') {
+    try {
+      const res = await fetch(cleanUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: postData,
+        redirect: 'follow',
+      });
+      const parsed = await res.json();
+      if (parsed && parsed.success) {
+        return parsed;
+      }
+    } catch (fetchErr) {
+      console.warn('Apps Script fetch note, trying https fallback:', fetchErr.message);
+    }
+  }
+
+  // Method 2: Fallback to https.request with 302 redirect tracking
   return new Promise((resolve) => {
     try {
-      const urlObj = new URL(gasUrl);
-      const postData = JSON.stringify({
-        base64: base64Data,
-        fileName,
-        folderId,
-      });
-
+      const urlObj = new URL(cleanUrl);
       const req = https.request(
         urlObj,
         {
