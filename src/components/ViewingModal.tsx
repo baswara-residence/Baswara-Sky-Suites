@@ -1232,12 +1232,41 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                           <span>Total (IDR)</span>
                         </div>
                         <div className="divide-y divide-slate-800/80 bg-[#080C14]">
-                          <div className="px-4 py-2.5 flex justify-between text-slate-200">
-                            <span>Sewa Pokok Unit ({inv.tenureMonths} Bulan)</span>
-                            <span className="font-mono font-medium text-white">
-                              Rp {(inv.totalRentForTenure || (inv.discountedMonthly * inv.tenureMonths)).toLocaleString('id-ID')}
-                            </span>
-                          </div>
+                          {(() => {
+                            const baseMo = inv.baseMonthly || (inv.unit?.pricePerMonth ?? Math.round(inv.discountedMonthly / (1 - (inv.discountRate || 0))));
+                            const gross = baseMo * inv.tenureMonths;
+                            const effectiveRate = inv.discountRate || (inv.tenureMonths === 12 ? 0.10 : inv.tenureMonths === 6 ? 0.05 : 0);
+                            const discountVal = effectiveRate > 0 ? Math.round(gross * effectiveRate) : 0;
+                            const discountPct = Math.round(effectiveRate * 100);
+
+                            return (
+                              <>
+                                <div className="px-4 py-2.5 flex justify-between text-slate-200">
+                                  <span>Sewa Pokok Unit ({inv.tenureMonths} Bulan)</span>
+                                  <span className="font-mono font-medium text-white">
+                                    Rp {(effectiveRate > 0 ? gross : (inv.totalRentForTenure || (inv.discountedMonthly * inv.tenureMonths))).toLocaleString('id-ID')}
+                                  </span>
+                                </div>
+
+                                {effectiveRate > 0 && discountVal > 0 && (
+                                  <div className="px-4 py-2.5 flex justify-between bg-emerald-950/25 border-y border-emerald-500/30 text-emerald-300">
+                                    <div className="flex flex-col">
+                                      <span className="font-medium text-emerald-200">
+                                        ✦ Diskon Komitmen Masa Sewa ({discountPct}% · {inv.tenureMonths} Bulan)
+                                      </span>
+                                      <span className="text-[10px] text-emerald-400/80">
+                                        Potongan sewa langsung Rp {(baseMo - inv.discountedMonthly).toLocaleString('id-ID')}/bln
+                                      </span>
+                                    </div>
+                                    <span className="font-mono font-bold text-emerald-300 self-center">
+                                      - Rp {discountVal.toLocaleString('id-ID')}
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+
                           <div className="px-4 py-2 flex justify-between text-slate-300">
                             <span>Pajak Pertambahan Nilai (PPN 11%)</span>
                             <span className="font-mono text-slate-200">
@@ -1269,29 +1298,15 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                         </div>
                       </div>
 
-                      {/* Official Bank Account Information */}
-                      <div className="p-4 bg-[#111827] border border-slate-800 space-y-1.5 text-xs">
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37] flex items-center justify-between">
-                          <span>Rekening Resmi Pembayaran (Escrow Account):</span>
-                          <span className="text-slate-400">Verifikasi Otomatis</span>
+                      {/* Official Legal Terms (Tanpa petunjuk transfer di dalam dokumen) */}
+                      <div className="p-4 bg-[#080C14] border border-slate-800 space-y-1.5 text-xs">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37]">
+                          Ketentuan Resmi Penagihan & Legalitas Dokumen:
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-                          <div>
-                            <div className="text-white font-medium">
-                              Bank {OFFICIAL_BANK_INFO.bankName} · Atas Nama: {OFFICIAL_BANK_INFO.accountHolder}
-                            </div>
-                            <div className="text-base sm:text-lg font-mono font-bold text-[#F3E5AB] tracking-wider mt-0.5">
-                              {OFFICIAL_BANK_INFO.accountNumber}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleCopyBank}
-                            className="px-3 py-1.5 border border-slate-700 hover:border-[#D4AF37] text-slate-300 hover:text-[#F3E5AB] text-[11px] font-mono flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-                          >
-                            {copiedBank ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                            <span>{copiedBank ? 'Tersalin' : 'Salin Rekening'}</span>
-                          </button>
+                        <div className="text-slate-300 text-[11px] leading-relaxed space-y-1 pt-0.5">
+                          <p>1. Dokumen invoice ini merupakan bukti penagihan resmi yang sah, diterbitkan oleh PT Baswara Mangkubumi Residence.</p>
+                          <p>2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.</p>
+                          <p>3. Serah terima unit hunian dan akses kartu resmi diproses setelah verifikasi leasing dikonfirmasi.</p>
                         </div>
                       </div>
 
