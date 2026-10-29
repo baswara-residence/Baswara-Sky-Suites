@@ -162,15 +162,20 @@ export const AdminDriveStatusModal: React.FC<AdminDriveStatusModalProps> = ({
     }
   };
 
-  const gasSampleCode = `// 1. Buka script.google.com dengan akun feel.ix.ee@gmail.com
-// 2. Buat Project Baru, hapus kode lama, lalu tempel kode ini:
-function doPost(e) {
+  const gasSampleCode = `function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
-    var targetFolderId = data.folderId || "1P7txSenSZUnfOy7QCFLLo6tsPHk3nKjM";
-    var folder = DriveApp.getFolderById(targetFolderId);
     
-    var cleanBase64 = data.base64.replace(/^data:image\\/[a-z]+;base64,/, "");
+    // Cari folder ID yang ditentukan atau otomatis buat folder "Baswara Invoices"
+    var folder;
+    try {
+      folder = DriveApp.getFolderById(data.folderId || "1P7txSenSZUnfOy7QCFLLo6tsPHk3nKjM");
+    } catch(errFolder) {
+      var search = DriveApp.getFoldersByName("Baswara Invoices");
+      folder = search.hasNext() ? search.next() : DriveApp.createFolder("Baswara Invoices");
+    }
+    
+    var cleanBase64 = (data.base64 || "").replace(/^data:image\\/[a-z]+;base64,/, "");
     var decoded = Utilities.base64Decode(cleanBase64);
     var blob = Utilities.newBlob(decoded, "image/jpeg", data.fileName || "Invoice.jpg");
     
@@ -189,8 +194,11 @@ function doPost(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
-// 3. Klik Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone)
-// 4. Salin URL Web App yang berakhiran /exec ke input di bawah ini.`;
+
+function testAuth() {
+  var root = DriveApp.getRootFolder();
+  Logger.log("Akses Drive Sukses: " + root.getName());
+}`;
 
   const handleCopyGas = () => {
     navigator.clipboard.writeText(gasSampleCode);

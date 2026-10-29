@@ -59,6 +59,7 @@ import {
   ReceiptData,
 } from '../lib/googleDriveInvoice';
 import { User, onAuthStateChanged } from 'firebase/auth';
+import { AdminDriveStatusModal } from './AdminDriveStatusModal';
 
 interface ViewingModalProps {
   isOpen: boolean;
@@ -125,6 +126,7 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
   const [copiedBank, setCopiedBank] = useState(false);
   const [copiedTweet, setCopiedTweet] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isAdminStatusOpen, setIsAdminStatusOpen] = useState(false);
 
   // Google Workspace state
   const [googleUser, setGoogleUser] = useState<User | null>(auth.currentUser);
@@ -680,9 +682,20 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
 
           {!isSubmitted ? (
             <div>
-              <div className="text-xs uppercase tracking-widest text-[#D4AF37] font-mono mb-2 flex items-center gap-2">
-                <ScrollText size={14} />
-                <span>The Baswara Sky Suites · Pengisian Formulir</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div className="text-xs uppercase tracking-widest text-[#D4AF37] font-mono flex items-center gap-2">
+                  <ScrollText size={14} />
+                  <span>The Baswara Sky Suites · Pengisian Formulir</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAdminStatusOpen(true)}
+                  className="text-[11px] font-mono text-[#D4AF37] hover:text-[#F3E5AB] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/40 px-2.5 py-1 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Buka Pengaturan Google Drive & Webhook"
+                >
+                  <HardDrive size={12} />
+                  <span>Pengaturan Drive & Webhook</span>
+                </button>
               </div>
               <h3 className="text-xl sm:text-2xl font-serif text-[#F3E5AB] mb-1">
                 Formulir Penyewaan Unit
@@ -1540,6 +1553,11 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
           </div>
         </div>
       )}
+
+      <AdminDriveStatusModal
+        isOpen={isAdminStatusOpen}
+        onClose={() => setIsAdminStatusOpen(false)}
+      />
     </>
   );
 };
