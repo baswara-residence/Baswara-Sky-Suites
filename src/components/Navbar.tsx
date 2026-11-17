@@ -22,7 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#0B0F19]/95 backdrop-blur-md border-b border-[#D4AF37]/20 transition-all">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#FBF9F5]/95 backdrop-blur-md border-b border-[#855D00]/20 shadow-xs transition-all">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-4">
         
         {/* Brand Wordmark: Baswara Sky Suites */}
@@ -30,13 +30,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => onNavigatePage(0)}
           className="text-left group cursor-pointer"
         >
-          <div className="text-lg sm:text-xl md:text-2xl font-serif tracking-[0.15em] text-[#D4AF37] uppercase whitespace-nowrap shrink-0 group-hover:text-[#F3E5AB] transition-colors">
+          <div className="text-lg sm:text-xl md:text-2xl font-serif tracking-[0.15em] text-[#855D00] uppercase whitespace-nowrap shrink-0 group-hover:text-[#704D00] transition-colors font-bold">
             Baswara Sky Suites
           </div>
         </button>
 
         {/* Clean Menu Navigation Links (Page-by-page switch) */}
-        <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs tracking-wider uppercase font-medium">
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs tracking-wider uppercase font-semibold">
           {navLinks.map((link) => {
             const isActive = currentPage === link.pageIndex;
             return (
@@ -45,13 +45,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => onNavigatePage(link.pageIndex)}
                 className={`py-2 px-1 relative transition-all whitespace-nowrap shrink-0 cursor-pointer flex items-center ${
                   isActive
-                    ? 'text-[#F3E5AB] font-semibold'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'text-[#855D00] font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <span>{link.label}</span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] shadow-[0_0_8px_#D4AF37]" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#855D00]" />
                 )}
               </button>
             );
@@ -62,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="lg:hidden flex items-center">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-slate-300 hover:text-[#D4AF37] focus:outline-none cursor-pointer"
+            className="p-2 text-slate-700 hover:text-[#9A7B1C] focus:outline-none cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#0B0F19] border-b border-[#D4AF37]/30 px-6 py-6 space-y-4">
+        <div className="lg:hidden bg-[#FBF9F5] border-b border-[#855D00]/25 px-6 py-6 shadow-xl">
           <nav className="flex flex-col space-y-1">
             {navLinks.map((link) => {
               const isActive = currentPage === link.pageIndex;
@@ -83,14 +83,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onNavigatePage(link.pageIndex);
                     setMobileMenuOpen(false);
                   }}
-                  className={`text-left text-xs font-medium tracking-widest uppercase py-3 px-3 flex items-center justify-between border-b border-slate-800 transition-colors ${
+                  className={`text-left text-xs font-semibold tracking-widest uppercase py-3 px-3 flex items-center justify-between border-b border-slate-200 transition-colors ${
                     isActive
-                      ? 'bg-[#111827] text-[#F3E5AB] border-l-2 border-l-[#D4AF37]'
-                      : 'text-slate-300 hover:text-[#D4AF37]'
+                      ? 'bg-white text-[#9A7B1C] border-l-4 border-l-[#9A7B1C] shadow-sm'
+                      : 'text-slate-700 hover:text-[#9A7B1C]'
                   }`}
                 >
                   <span>{link.label}</span>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]" />}
+                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#9A7B1C]" />}
                 </button>
               );
             })}

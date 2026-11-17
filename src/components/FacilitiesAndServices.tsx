@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { FACILITIES_DATA } from '../data/facilities';
 import {
-  Sparkles,
   Shield,
   Clock,
   PhoneCall,
   FileText,
   Key,
   ArrowRight,
-  CheckCircle,
 } from 'lucide-react';
 
 interface FacilitiesAndServicesProps {
@@ -37,27 +35,27 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
 
   const steps = [
     {
-      step: 'Tahap 1',
+      step: '01',
       title: 'Pendaftaran & Inquiry',
-      desc: 'Pengisian formulir online atau hubungi perwakilan resmi via DM X (@the_BASWARA).',
+      desc: 'Pengisian formulir online atau hubungi perwakilan resmi via akun X resmi (@the_BASWARA).',
       icon: PhoneCall,
     },
     {
-      step: 'Tahap 2',
-      title: 'Pengisian Formulir',
-      desc: 'Melengkapi profil penghuni, identitas, unit pilihan, kontak darurat, serta menyetujui tata tertib gedung dan komitmen privasi residensial.',
+      step: '02',
+      title: 'Verifikasi & Formulir',
+      desc: 'Melengkapi profil penghuni, identitas, unit pilihan, kontak darurat, serta menandatangani komitmen privasi.',
       icon: FileText,
     },
     {
-      step: 'Tahap 3',
-      title: 'Pembayaran & Deposit',
-      desc: 'Penyelesaian security deposit (3 bulan), sewa bulan pertama, dan service charge melalui jalur resmi penagihan manajemen.',
+      step: '03',
+      title: 'Pembayaran & Escrow',
+      desc: 'Penyelesaian sewa pokok dan security deposit (2 bulan refundable) ke rekening resmi Bank Chobank PT Baswara Mangkubumi Residence.',
       icon: Shield,
     },
     {
-      step: 'Tahap 4',
+      step: '04',
       title: 'Handover & Aktivasi',
-      desc: 'Penyerahan Smart Key, perekaman biometrik (Face Recognition), inspeksi unit, serta pendampingan oleh tim Butler.',
+      desc: 'Penyerahan Smart Key, perekaman biometrik (Face Recognition), inspeksi unit, serta pendampingan butler.',
       icon: Key,
     },
   ];
@@ -88,23 +86,29 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
       {/* ================================================= */}
       <div className="mb-24">
         {/* Editorial Title */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-b border-[#D4AF37]/20 pb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-b border-[#855D00]/25 pb-8 gap-4">
           <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#F3E5AB]">
+            <div className="text-xs uppercase tracking-[0.25em] text-[#855D00] font-mono font-bold mb-2">
+              Unrivaled Amenities
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#0F172A] font-bold">
               World-Class Facilities
             </h2>
+            <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-xl">
+              Fasilitas eksklusif di setiap lantai mulai dari lobby privat, sky pool, hingga helipad rooftop.
+            </p>
           </div>
 
           {/* Tower Selector */}
-          <div className="mt-6 md:mt-0 inline-flex p-1 bg-[#111827] border border-[#D4AF37]/20">
+          <div className="mt-4 md:mt-0 inline-flex p-1 bg-slate-100 border border-slate-300 shadow-sm">
             <button
               onClick={() => {
                 setSelectedTower('Baskara');
                 setActiveFacilityIndex(4);
                 setActiveGalleryIndex(0);
               }}
-              className={`px-5 py-2 text-xs font-medium tracking-wider uppercase transition-colors cursor-pointer ${
-                selectedTower === 'Baskara' ? 'bg-[#D4AF37] text-[#0B0F19]' : 'text-slate-400 hover:text-white'
+              className={`px-5 py-2 text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                selectedTower === 'Baskara' ? 'bg-[#855D00] text-white shadow-sm' : 'text-slate-700 hover:text-slate-900 bg-white'
               }`}
             >
               Baskara Exclusives (VVIP)
@@ -115,8 +119,8 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
                 setActiveFacilityIndex(4);
                 setActiveGalleryIndex(0);
               }}
-              className={`px-5 py-2 text-xs font-medium tracking-wider uppercase transition-colors cursor-pointer ${
-                selectedTower === 'Arunika' ? 'bg-[#D4AF37] text-[#0B0F19]' : 'text-slate-400 hover:text-white'
+              className={`px-5 py-2 text-xs font-bold tracking-wider uppercase transition-all cursor-pointer ${
+                selectedTower === 'Arunika' ? 'bg-[#855D00] text-white shadow-sm' : 'text-slate-700 hover:text-slate-900 bg-white'
               }`}
             >
               Arunika Facilities
@@ -127,8 +131,8 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
         {/* Hero Spotlight Image & Facility Card */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 items-stretch">
           
-          {/* Left: Dynamic Visual Hero */}
-          <div className="lg:col-span-7 relative min-h-[380px] sm:min-h-[460px] lg:min-h-[520px] overflow-hidden bg-[#111827] border border-[#D4AF37]/35 flex flex-col justify-end group">
+          {/* Left: Dynamic Visual Hero with High-Contrast Scrim */}
+          <div className="lg:col-span-7 relative min-h-[380px] sm:min-h-[460px] lg:min-h-[520px] overflow-hidden bg-slate-900 border-2 border-slate-300 shadow-xl flex flex-col justify-end group">
             <img
               key={currentImage}
               src={currentImage}
@@ -136,49 +140,51 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               referrerPolicy="no-referrer"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/40 to-transparent" />
+            {/* Scrim designed for clear photo legibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
-
-            {/* Bottom caption */}
-            <div className="relative z-10 p-6 sm:p-8 space-y-4">
-              <div>
-                <div className="text-xs uppercase tracking-widest text-[#D4AF37] font-mono mb-1">
-                  Tower {currentFacility.tower} · {currentFacility.level}
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-serif text-white font-medium drop-shadow-md">
-                  {currentFacility.name}
-                </h3>
+            {/* Bottom caption with guaranteed white text over measured scrim */}
+            <div className="relative z-10 p-6 sm:p-8 space-y-2 text-white">
+              <div className="text-xs uppercase tracking-widest text-[#F3E5AB] font-mono font-bold">
+                Tower {currentFacility.tower} · {currentFacility.level}
               </div>
+              <h3 className="text-2xl sm:text-3xl font-serif text-white font-bold drop-shadow-md">
+                {currentFacility.name}
+              </h3>
             </div>
           </div>
 
           {/* Right: Selected Facility Information Card */}
-          <div className="lg:col-span-5 bg-[#111827] border border-[#D4AF37]/30 p-6 sm:p-8 flex flex-col justify-between">
+          <div className="lg:col-span-5 bg-white border-2 border-slate-300 shadow-md p-6 sm:p-8 flex flex-col justify-between">
             <div>
+              <div className="text-xs uppercase tracking-wider text-[#855D00] font-mono font-bold mb-3">
+                Fitur & Spesifikasi Fasilitas
+              </div>
+
               {/* Sub-facilities list */}
               {currentFacility.subFacilities && currentFacility.subFacilities.length > 0 ? (
                 <div className="space-y-3 mb-6">
                   {currentFacility.subFacilities.map((sub, sIdx) => (
                     <div
                       key={sIdx}
-                      className="p-3 bg-[#0B0F19] border border-slate-800/90 hover:border-[#D4AF37]/40 transition-colors"
+                      className="p-3.5 bg-[#FAF7F2] border border-[#E5DFD3] hover:border-[#855D00] transition-colors shadow-xs"
                     >
-                      <div className="text-xs font-medium text-[#F3E5AB] mb-1 flex items-center gap-1.5">
-                        <span className="text-[#D4AF37]">✦</span>
+                      <div className="text-xs font-bold text-[#0F172A] mb-1 flex items-center gap-1.5">
+                        <span className="text-[#855D00]">✦</span>
                         <span>{sub.title}</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
                         {sub.description}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2.5 mb-6">
                   {currentFacility.amenities.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-200">
-                      <span className="text-[#D4AF37] text-xs mt-0.5">✦</span>
-                      <span>{item}</span>
+                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700">
+                      <span className="text-[#855D00] text-xs mt-0.5">✦</span>
+                      <span className="font-medium">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -186,23 +192,23 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
             </div>
 
             {/* Access & Hours Strip */}
-            <div className="pt-4 border-t border-slate-800 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Shield size={12} className="text-[#D4AF37]" />
-                  <span>Protokol Akses:</span>
+            <div className="pt-4 border-t border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600">
+                <div className="flex items-center gap-1.5">
+                  <Shield size={14} className="text-[#855D00]" />
+                  <span className="font-medium">Protokol Akses:</span>
                 </div>
-                <span className="text-[#D4AF37] font-mono text-[11px] font-medium">
+                <span className="text-[#855D00] font-mono text-[11px] font-bold">
                   {currentFacility.accessBadge}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Clock size={12} className="text-[#D4AF37]" />
-                  <span>Jam Operasional:</span>
+              <div className="flex items-center justify-between text-slate-600">
+                <div className="flex items-center gap-1.5">
+                  <Clock size={14} className="text-[#855D00]" />
+                  <span className="font-medium">Jam Operasional:</span>
                 </div>
-                <span className="text-slate-300 font-mono text-[11px]">
+                <span className="text-slate-800 font-mono text-[11px] font-bold">
                   {currentFacility.operationalHours}
                 </span>
               </div>
@@ -211,7 +217,7 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
 
         </div>
 
-        {/* Interactive Level Buttons */}
+        {/* Interactive Level Buttons (Crisp Architectural Cards) */}
         <div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
             {facilities.map((fac, idx) => {
@@ -220,19 +226,23 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
                 <button
                   key={fac.id || idx}
                   onClick={() => handleSelectFacility(idx)}
-                  className={`p-3.5 text-left border transition-all cursor-pointer relative overflow-hidden group ${
+                  className={`p-3.5 text-left border-2 transition-all cursor-pointer relative overflow-hidden group shadow-xs ${
                     isActive
-                      ? 'bg-[#D4AF37]/15 border-[#D4AF37] shadow-lg ring-1 ring-[#D4AF37]/40'
-                      : 'bg-[#111827] border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white'
+                      ? 'bg-[#FAF7F2] border-[#855D00] shadow-md ring-1 ring-[#855D00]'
+                      : 'bg-white border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900'
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute top-0 right-0 w-2 h-2 bg-[#D4AF37]" />
+                    <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-[#855D00]" />
                   )}
-                  <div className="text-[11px] font-mono uppercase text-[#D4AF37] mb-1 font-bold">
+                  <div className={`text-[11px] font-mono uppercase mb-1 font-bold ${
+                    isActive ? 'text-[#855D00]' : 'text-slate-500'
+                  }`}>
                     <span>{fac.level}</span>
                   </div>
-                  <div className="text-xs font-medium text-slate-200 line-clamp-2 leading-tight">
+                  <div className={`text-xs font-bold line-clamp-2 leading-tight ${
+                    isActive ? 'text-[#0F172A]' : 'text-slate-700'
+                  }`}>
                     {fac.name}
                   </div>
                 </button>
@@ -245,18 +255,18 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
       {/* ================================================= */}
       {/* 2. SERVICES & RENTAL KYC WORKFLOW */}
       {/* ================================================= */}
-      <div id="services" className="pt-8 border-t border-[#D4AF37]/20">
+      <div id="services" className="pt-8 border-t border-[#855D00]/25">
         
         {/* Sub-Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-mono mb-3">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="text-xs uppercase tracking-[0.25em] text-[#855D00] font-mono font-bold mb-3">
             Integrity & Governance
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#F3E5AB] mb-6 [text-wrap:balance]">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#0F172A] font-bold mb-4 [text-wrap:balance]">
             Tata Cara Penyewaan & Layanan Premium
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed [text-wrap:balance]">
-            Komitmen kami terhadap eksklusivitas dan privasi tercermin dalam 4 langkah terstruktur penyewaan serta verifikasi profil penghuni di Baswara Sky Suites.
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed [text-wrap:balance]">
+            Komitmen kami terhadap eksklusivitas dan kenyamanan tercermin dalam 4 langkah terstruktur penyewaan serta verifikasi profil penghuni di Baswara Sky Suites.
           </p>
         </div>
 
@@ -267,21 +277,21 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
             return (
               <div
                 key={idx}
-                className="bg-[#111827] border border-slate-800 hover:border-[#D4AF37]/50 p-6 flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1 shadow-md"
+                className="bg-white border-2 border-slate-300 hover:border-[#855D00] p-6 flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1 shadow-md"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-mono uppercase tracking-widest text-[#D4AF37] bg-[#0B0F19] px-2.5 py-1 border border-[#D4AF37]/30">
-                      {st.step}
+                    <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#855D00] bg-[#FAF7F2] px-2.5 py-1 border border-[#855D00]/40">
+                      Tahap {st.step}
                     </span>
-                    <IconComponent size={18} className="text-[#D4AF37] group-hover:scale-110 transition-transform" />
+                    <IconComponent size={20} className="text-[#855D00] group-hover:scale-110 transition-transform" />
                   </div>
 
-                  <h3 className="text-lg font-serif text-white mb-2 group-hover:text-[#F3E5AB] transition-colors">
+                  <h3 className="text-lg font-serif font-bold text-[#0F172A] mb-2 group-hover:text-[#855D00] transition-colors">
                     {st.title}
                   </h3>
 
-                  <p className="text-slate-300 text-xs leading-relaxed font-light">
+                  <p className="text-slate-600 text-xs leading-relaxed font-normal">
                     {st.desc}
                   </p>
                 </div>
@@ -291,12 +301,12 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
         </div>
 
         {/* Security & Governance Protocols */}
-        <div className="bg-[#111827] border border-[#D4AF37]/30 p-8 sm:p-10 shadow-2xl mb-12">
+        <div className="bg-white border-2 border-slate-300 p-8 sm:p-10 shadow-lg mb-12">
           <div className="max-w-3xl mb-8">
-            <h3 className="text-2xl sm:text-3xl font-serif text-[#F3E5AB] mb-3">
+            <h3 className="text-2xl sm:text-3xl font-serif font-bold text-[#0F172A] mb-2">
               Protokol Keamanan & Layanan Residensial
             </h3>
-            <p className="text-slate-400 text-xs sm:text-sm">
+            <p className="text-slate-600 text-xs sm:text-sm">
               Standar operasional ketat untuk memastikan ketenteraman dan privasi tanpa kompromi bagi seluruh penghuni.
             </p>
           </div>
@@ -305,13 +315,13 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
             {protocols.map((proto, pIdx) => (
               <div
                 key={pIdx}
-                className="p-5 bg-[#0B0F19] border border-slate-800 hover:border-[#D4AF37]/40 transition-colors flex flex-col justify-between"
+                className="p-5 bg-[#FAF7F2] border border-[#E5DFD3] hover:border-[#855D00] transition-colors flex flex-col justify-between shadow-xs"
               >
                 <div>
-                  <h4 className="text-base font-serif text-white mb-2 font-medium">
+                  <h4 className="text-base font-serif font-bold text-[#0F172A] mb-2">
                     {proto.title}
                   </h4>
-                  <p className="text-slate-300 text-xs leading-relaxed font-light">
+                  <p className="text-slate-600 text-xs leading-relaxed font-normal">
                     {proto.desc}
                   </p>
                 </div>
@@ -319,13 +329,13 @@ export const FacilitiesAndServices: React.FC<FacilitiesAndServicesProps> = ({
             ))}
           </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-xs text-slate-400 text-center sm:text-left">
+          <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="text-xs text-slate-600 text-center sm:text-left">
               Siap memulai tahapan reservasi unit Anda? Tim Leasing & Marketing kami siap memfasilitasi formulir pendaftaran.
             </span>
             <button
               onClick={onOpenViewingModal}
-              className="px-6 py-3 bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#0B0F19] text-xs font-semibold tracking-wider uppercase transition-colors flex items-center gap-2 cursor-pointer shrink-0"
+              className="px-6 py-3 bg-[#855D00] hover:bg-[#704D00] text-white text-xs font-bold tracking-wider uppercase transition-colors flex items-center gap-2 cursor-pointer shrink-0 shadow-md"
             >
               <span>Isi Formulir Penyewaan</span>
               <ArrowRight size={14} />

@@ -252,13 +252,13 @@ Head of Leasing: Natasha Wijaya
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md p-4 sm:p-6 flex justify-center items-start">
-      <div className="bg-[#111827] border border-[#D4AF37] max-w-4xl w-full p-6 sm:p-8 relative my-6 sm:my-10 shadow-2xl">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm p-4 sm:p-6 flex justify-center items-start">
+      <div className="bg-white border-2 border-[#9A7B1C] max-w-4xl w-full p-6 sm:p-8 relative my-6 sm:my-10 shadow-2xl text-slate-900">
         
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 z-10 transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 p-2 z-10 transition-colors cursor-pointer"
           aria-label="Close"
         >
           <X size={20} />
@@ -267,7 +267,7 @@ Head of Leasing: Natasha Wijaya
         {/* TAB 1: KALKULATOR BIAYA */}
         {activeTab === 'calculator' && (
           <div>
-            <h3 className="text-2xl sm:text-3xl font-serif text-[#F3E5AB] mb-6 pr-10">
+            <h3 className="text-2xl sm:text-3xl font-serif text-[#0F172A] font-bold mb-6 pr-10">
               Kalkulator Biaya Sewa & Rincian Pembayaran
             </h3>
 
@@ -278,13 +278,13 @@ Head of Leasing: Natasha Wijaya
                 
                 {/* Unit Selection */}
                 <div>
-                  <label className="block text-xs uppercase tracking-wider text-slate-300 mb-2">
+                  <label className="block text-xs uppercase tracking-wider text-slate-700 font-bold mb-2">
                     Pilih Tipe Unit Apartemen
                   </label>
                   <select
                     value={activeUnitId}
                     onChange={(e) => handleUnitChange(e.target.value)}
-                    className="w-full bg-[#0B0F19] border border-slate-700 text-slate-100 p-3 text-sm focus:border-[#D4AF37] focus:outline-none"
+                    className="w-full bg-slate-50 border-2 border-slate-300 text-slate-900 p-3 text-sm focus:border-[#9A7B1C] focus:bg-white focus:outline-none cursor-pointer"
                   >
                     <optgroup label="Tower Arunika">
                       {UNITS_DATA.filter((u) => u.tower === 'Arunika').map((u) => (
@@ -301,15 +301,15 @@ Head of Leasing: Natasha Wijaya
                       ))}
                     </optgroup>
                   </select>
-                  <div className="mt-1.5 text-[11px] text-slate-400">
-                    <span>Tower: <strong className={isBaskara ? 'text-[#D4AF37]' : 'text-slate-200'}>{unit.tower}</strong></span>
+                  <div className="mt-1.5 text-[11px] text-slate-500">
+                    <span>Tower: <strong className={isBaskara ? 'text-[#855D00]' : 'text-slate-800'}>{unit.tower}</strong></span>
                   </div>
                 </div>
 
                 {/* Lease Duration Buttons: 3 Bulan, 6 Bulan, dan 12 Bulan SAJA */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs uppercase tracking-wider text-slate-300">
+                    <label className="block text-xs uppercase tracking-wider text-slate-700 font-bold">
                       Durasi Masa Sewa (Privilege Tenure)
                     </label>
                   </div>
@@ -318,130 +318,128 @@ Head of Leasing: Natasha Wijaya
                     <button
                       type="button"
                       onClick={() => setTenureMonths(3)}
-                      className={`p-3 text-center border text-xs tracking-wider transition-colors cursor-pointer ${
+                      className={`p-3 text-center border text-xs tracking-wider transition-all cursor-pointer ${
                         tenureMonths === 3
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#F3E5AB]'
-                          : 'border-slate-800 bg-[#0B0F19] text-slate-400 hover:text-white'
+                          ? 'border-2 border-[#9A7B1C] bg-amber-50 text-[#704D00] font-bold shadow-sm'
+                          : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
                       }`}
                     >
-                      <div className="font-semibold text-sm">3 Bulan</div>
-                      <div className="text-[10px] text-slate-400">Tarif Standar</div>
+                      <div className="font-bold text-sm">3 Bulan</div>
+                      <div className="text-[10px] text-slate-500">Tarif Standar</div>
                     </button>
 
                     {/* 6 Bulan */}
                     <button
                       type="button"
                       onClick={() => setTenureMonths(6)}
-                      className={`p-3 text-center border text-xs tracking-wider transition-colors cursor-pointer ${
+                      className={`p-3 text-center border text-xs tracking-wider transition-all cursor-pointer ${
                         tenureMonths === 6
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#F3E5AB]'
-                          : 'border-slate-800 bg-[#0B0F19] text-slate-400 hover:text-white'
+                          ? 'border-2 border-[#9A7B1C] bg-amber-50 text-[#704D00] font-bold shadow-sm'
+                          : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
                       }`}
                     >
-                      <div className="font-semibold text-sm">6 Bulan</div>
-                      <div className="text-[10px] text-[#D4AF37]">Diskon 5%</div>
+                      <div className="font-bold text-sm">6 Bulan</div>
+                      <div className="text-[10px] text-[#855D00] font-bold">Diskon 5%</div>
                     </button>
 
                     {/* 12 Bulan */}
                     <button
                       type="button"
                       onClick={() => setTenureMonths(12)}
-                      className={`p-3 text-center border text-xs tracking-wider transition-colors cursor-pointer ${
+                      className={`p-3 text-center border text-xs tracking-wider transition-all cursor-pointer ${
                         tenureMonths === 12
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/15 text-[#F3E5AB]'
-                          : 'border-slate-800 bg-[#0B0F19] text-slate-400 hover:text-white'
+                          ? 'border-2 border-[#9A7B1C] bg-amber-50 text-[#704D00] font-bold shadow-sm'
+                          : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400'
                       }`}
                     >
-                      <div className="font-semibold text-sm">12 Bulan</div>
-                      <div className="text-[10px] text-[#D4AF37]">Diskon 10%</div>
+                      <div className="font-bold text-sm">12 Bulan</div>
+                      <div className="text-[10px] text-[#855D00] font-bold">Diskon 10%</div>
                     </button>
                   </div>
                 </div>
 
-
-
               </div>
 
               {/* Right Column: Breakdown & Summary */}
-              <div className="lg:col-span-6 bg-[#0B0F19] border border-[#D4AF37]/30 p-6 flex flex-col justify-between">
+              <div className="lg:col-span-6 bg-[#FAF8F5] border-2 border-[#9A7B1C]/30 p-6 flex flex-col justify-between shadow-sm">
                 <div>
                   {/* Rincian Biaya Sewa (Tanpa Duplikasi) */}
-                  <div className="space-y-3 pb-5 border-b border-slate-800 text-xs sm:text-sm">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37] font-semibold">
+                  <div className="space-y-3 pb-5 border-b border-slate-200 text-xs sm:text-sm">
+                    <div className="text-[11px] font-mono uppercase tracking-wider text-[#855D00] font-bold">
                       Rincian Biaya Sewa ({tenureMonths} Bulan)
                     </div>
 
                     {/* 1. Biaya Sewa Pokok Unit (Sesuai Tenor) */}
-                    <div className="flex justify-between items-center text-slate-300">
+                    <div className="flex justify-between items-center text-slate-800">
                       <div>
-                        <span className="font-medium text-slate-200 block">Sewa Pokok Unit ({unit.name})</span>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="font-bold text-slate-900 block">Sewa Pokok Unit ({unit.name})</span>
+                        <span className="text-[10px] text-slate-500 font-mono">
                           {formatRupiah(discountedMonthly)}/bln × {tenureMonths} Bulan
                           {discountRate > 0 && (
-                            <span className="text-emerald-400 ml-1">
+                            <span className="text-emerald-700 ml-1 font-bold">
                               (Diskon Tenor {discountRate * 100}%)
                             </span>
                           )}
                         </span>
                       </div>
-                      <span className="font-mono tabular-nums text-slate-200 font-semibold">
+                      <span className="font-mono tabular-nums text-slate-900 font-bold">
                         {formatRupiah(totalRentForTenure)}
                       </span>
                     </div>
 
                     {/* 2. Pajak Pertambahan Nilai (PPN 11%) */}
-                    <div className="flex justify-between items-center text-slate-300">
+                    <div className="flex justify-between items-center text-slate-800">
                       <div>
-                        <span className="font-medium text-slate-200 block">Pajak Pertambahan Nilai (PPN 11%)</span>
-                        <span className="text-[10px] text-slate-400">11% dari total nilai sewa</span>
+                        <span className="font-medium text-slate-900 block">Pajak Pertambahan Nilai (PPN 11%)</span>
+                        <span className="text-[10px] text-slate-500">11% dari total nilai sewa</span>
                       </div>
-                      <span className="font-mono tabular-nums text-slate-200 font-semibold">
+                      <span className="font-mono tabular-nums text-slate-900 font-bold">
                         {formatRupiah(ppnAmount)}
                       </span>
                     </div>
 
                     {/* 3. Bea Materai & Administrasi Legalisasi Dokumen */}
-                    <div className="flex justify-between items-center text-slate-300">
+                    <div className="flex justify-between items-center text-slate-800">
                       <div>
-                        <span className="font-medium text-slate-200 block">Bea Materai & Administrasi</span>
-                        <span className="text-[10px] text-slate-400">Legalisasi perjanjian sewa bermaterai lunas</span>
+                        <span className="font-medium text-slate-900 block">Bea Materai & Administrasi</span>
+                        <span className="text-[10px] text-slate-500">Legalisasi perjanjian sewa bermaterai lunas</span>
                       </div>
-                      <span className="font-mono tabular-nums text-slate-200 font-semibold">
+                      <span className="font-mono tabular-nums text-slate-900 font-bold">
                         {formatRupiah(materaiFee)}
                       </span>
                     </div>
 
                     {/* 4. Security Deposit Jaminan Unit */}
-                    <div className="flex justify-between items-center text-slate-300">
+                    <div className="flex justify-between items-center text-slate-800">
                       <span className="flex items-center gap-1.5">
-                        <ShieldCheck size={14} className="text-[#D4AF37]" />
+                        <ShieldCheck size={14} className="text-[#9A7B1C]" />
                         <div>
-                          <span className="font-medium text-slate-200 block">
+                          <span className="font-bold text-slate-900 block">
                             Security Deposit (2 Bulan Sewa Pokok)
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-500">
                             100% Refundable di akhir masa kontrak
                           </span>
                         </div>
                       </span>
-                      <span className="font-mono tabular-nums text-slate-200 font-semibold">
+                      <span className="font-mono tabular-nums text-slate-900 font-bold">
                         {formatRupiah(securityDeposit)}
                       </span>
                     </div>
                   </div>
 
                   {/* Total Pembayaran */}
-                  <div className="py-4 border-b border-slate-800">
-                    <div className="flex flex-wrap items-center justify-between gap-2 bg-[#D4AF37]/10 p-3.5 border border-[#D4AF37]/40">
+                  <div className="py-4 border-b border-slate-200">
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-3.5 border-2 border-[#9A7B1C] shadow-sm">
                       <div>
-                        <span className="text-xs sm:text-sm uppercase tracking-wider text-[#F3E5AB] font-bold block">
+                        <span className="text-xs sm:text-sm uppercase tracking-wider text-[#0F172A] font-bold block">
                           Total Pembayaran
                         </span>
-                        <span className="text-[10px] text-slate-300">
+                        <span className="text-[10px] text-slate-500">
                           Biaya Sewa ({tenureMonths} Bulan) + PPN 11% + Materai + Security Deposit
                         </span>
                       </div>
-                      <div className="font-serif text-2xl sm:text-3xl text-[#D4AF37] font-bold tabular-nums font-mono">
+                      <div className="font-serif text-2xl sm:text-3xl text-[#855D00] font-bold tabular-nums font-mono">
                         {formatRupiah(initialTotalUpfront)}
                       </div>
                     </div>
@@ -449,11 +447,11 @@ Head of Leasing: Natasha Wijaya
                 </div>
 
                 {/* Action Buttons */}
-                <div className="pt-6 border-t border-slate-800 flex flex-col gap-3">
+                <div className="pt-6 border-t border-slate-200 flex flex-col gap-3">
                   <button
                     type="button"
                     onClick={handleCopyQuote}
-                    className="w-full py-2.5 px-3 border border-slate-700 text-xs tracking-wider uppercase text-slate-200 hover:text-white hover:border-slate-500 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-2.5 px-3 border-2 border-slate-300 text-xs tracking-wider uppercase text-slate-800 bg-white hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 cursor-pointer font-bold shadow-sm"
                   >
                     <Copy size={13} />
                     <span>{copied ? 'Tersalin!' : 'Salin Ringkasan Estimasi Biaya'}</span>
@@ -465,7 +463,7 @@ Head of Leasing: Natasha Wijaya
                       onClose();
                       onProceedToBooking(quoteData);
                     }}
-                    className="w-full py-3 px-4 bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#0B0F19] text-xs font-semibold tracking-wider uppercase transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                    className="w-full py-3 px-4 bg-[#9A7B1C] hover:bg-[#806411] text-white text-xs font-bold tracking-wider uppercase transition-colors flex items-center justify-center gap-2 shadow-md cursor-pointer"
                   >
                     <span>Lanjut ke Pengisian Formulir Sewa</span>
                     <ArrowRight size={14} />
@@ -483,10 +481,10 @@ Head of Leasing: Natasha Wijaya
           <div className="space-y-6">
             
             {/* Invoice Top Action Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0B0F19] p-3 border border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#FAF8F5] p-3 border border-slate-300">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs text-slate-200 font-mono">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs text-slate-800 font-mono font-bold">
                   Invoice Terhubung Langsung dengan Perhitungan Kalkulator
                 </span>
               </div>
@@ -495,7 +493,7 @@ Head of Leasing: Natasha Wijaya
                 <button
                   type="button"
                   onClick={() => downloadQuoteDataJpg(quoteData, 'Calon Penghuni', '@calon_penghuni')}
-                  className="px-3 py-1.5 bg-[#D4AF37]/20 border border-[#D4AF37] hover:bg-[#D4AF37]/30 text-[#F3E5AB] text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 bg-[#9A7B1C] hover:bg-[#806411] text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
                 >
                   <Download size={13} />
                   <span>Unduh File JPG</span>
@@ -504,7 +502,7 @@ Head of Leasing: Natasha Wijaya
                 <button
                   type="button"
                   onClick={handleCopyInvoice}
-                  className="px-3 py-1.5 border border-slate-700 hover:border-slate-500 text-slate-300 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 border-2 border-slate-300 hover:bg-slate-100 text-slate-800 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer bg-white"
                 >
                   <Copy size={13} />
                   <span>{invoiceCopied ? 'Tersalin!' : 'Salin Teks Invoice'}</span>
@@ -513,11 +511,11 @@ Head of Leasing: Natasha Wijaya
             </div>
 
             {/* Printable Official Invoice Card */}
-            <div className="bg-[#0B0F19] border-2 border-[#D4AF37]/50 p-6 sm:p-8 relative text-slate-200">
+            <div className="bg-white border-2 border-[#9A7B1C]/50 p-6 sm:p-8 relative text-slate-800 shadow-md">
               
               {/* Watermark / Digital Seal */}
               <div className="absolute right-8 top-12 opacity-10 pointer-events-none select-none hidden sm:block">
-                <div className="w-48 h-48 border-4 border-[#D4AF37] rounded-full flex flex-col items-center justify-center text-[#D4AF37] font-serif text-center p-4 rotate-[-12deg]">
+                <div className="w-48 h-48 border-4 border-[#9A7B1C] rounded-full flex flex-col items-center justify-center text-[#9A7B1C] font-serif text-center p-4 rotate-[-12deg]">
                   <span className="text-xs font-mono uppercase tracking-widest">OFFICIAL SEAL</span>
                   <span className="font-bold text-sm">PT BASWARA</span>
                   <span className="text-[10px]">MANGKUBUMI RESIDENCE</span>
@@ -526,25 +524,25 @@ Head of Leasing: Natasha Wijaya
               </div>
 
               {/* Invoice Header */}
-              <div className="border-b border-slate-800 pb-6 mb-6">
+              <div className="border-b border-slate-200 pb-6 mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <h2 className="text-2xl sm:text-3xl font-serif text-[#F3E5AB] tracking-wide">
+                    <h2 className="text-2xl sm:text-3xl font-serif text-[#0F172A] font-bold tracking-wide">
                       BASWARA SKY SUITES
                     </h2>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-600 mt-1">
                       Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat 10310
                     </p>
                   </div>
 
                   <div className="text-left sm:text-right">
-                    <div className="text-xs font-mono text-slate-300">
-                      No: <span className="text-white font-semibold">{invoiceNumber}</span>
+                    <div className="text-xs font-mono text-slate-600">
+                      No: <span className="text-slate-900 font-bold">{invoiceNumber}</span>
                     </div>
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-[11px] text-slate-600">
                       Tanggal Terbit: {issueDateFormatted}
                     </div>
-                    <div className="text-[11px] text-amber-400">
+                    <div className="text-[11px] text-amber-700 font-bold">
                       Tenggat Pembayaran: {dueDateFormatted} (7 Hari)
                     </div>
                   </div>
@@ -552,110 +550,110 @@ Head of Leasing: Natasha Wijaya
               </div>
 
               {/* Tenant & Lease Meta */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-800 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-200 text-xs">
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37] mb-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-[#855D00] font-bold mb-1">
                     Ditagihkan Kepada (Calon Penyewa):
                   </div>
-                  <div className="font-medium text-white text-sm">
+                  <div className="font-bold text-slate-900 text-sm">
                     Pendaftar Sewa Terverifikasi
                   </div>
                 </div>
 
                 <div className="sm:text-right">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37] mb-1">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-[#855D00] font-bold mb-1">
                     Spesifikasi Kontrak & Unit:
                   </div>
-                  <div className="font-semibold text-[#F3E5AB] text-sm">
+                  <div className="font-bold text-[#0F172A] text-sm">
                     {unit.name} · {unit.tower}
                   </div>
                 </div>
               </div>
 
               {/* Simplified Luxury Billing Statement */}
-              <div className="py-6 border-b border-slate-800">
-                <div className="text-xs font-mono uppercase tracking-widest text-[#D4AF37] mb-4">
+              <div className="py-6 border-b border-slate-200">
+                <div className="text-xs font-mono uppercase tracking-widest text-[#855D00] font-bold mb-4">
                   Rincian Penagihan Sewa
                 </div>
 
                 <div className="space-y-3 text-xs">
                   {/* Item 1: Sewa Pokok */}
-                  <div className="flex items-start justify-between py-2 border-b border-slate-800/60">
+                  <div className="flex items-start justify-between py-2 border-b border-slate-200">
                     <div>
-                      <div className="text-slate-100 font-medium text-sm">
+                      <div className="text-slate-900 font-bold text-sm">
                         Sewa Pokok Unit ({unit.name}) · {tenureMonths} Bulan
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-slate-500 mt-0.5">
                         Tower {unit.tower} · {formatRupiah(baseMonthly)}/bln × {tenureMonths} Bulan
                         {discountRate > 0 && (
-                          <span className="ml-2 text-emerald-400 font-mono">
+                          <span className="ml-2 text-emerald-700 font-mono font-bold">
                             (Diskon Tenor {discountRate * 100}%: -{formatRupiah((baseMonthly - discountedMonthly) * tenureMonths)})
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className="text-right font-mono text-white font-medium text-sm whitespace-nowrap pl-4">
+                    <div className="text-right font-mono text-slate-900 font-bold text-sm whitespace-nowrap pl-4">
                       {formatRupiah(totalRentForTenure)}
                     </div>
                   </div>
 
                   {/* Item 2: PPN 11% */}
-                  <div className="flex items-start justify-between py-2 border-b border-slate-800/60">
+                  <div className="flex items-start justify-between py-2 border-b border-slate-200">
                     <div>
-                      <div className="text-slate-200 font-medium">
+                      <div className="text-slate-900 font-medium">
                         Pajak Pertambahan Nilai (PPN 11%)
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-slate-500 mt-0.5">
                         Pajak sewa resmi 11% dari total nilai kontrak sewa
                       </div>
                     </div>
-                    <div className="text-right font-mono text-white font-medium whitespace-nowrap pl-4">
+                    <div className="text-right font-mono text-slate-900 font-bold whitespace-nowrap pl-4">
                       {formatRupiah(ppnAmount)}
                     </div>
                   </div>
 
                   {/* Item 3: Bea Materai */}
-                  <div className="flex items-start justify-between py-2 border-b border-slate-800/60">
+                  <div className="flex items-start justify-between py-2 border-b border-slate-200">
                     <div>
-                      <div className="text-slate-200 font-medium">
+                      <div className="text-slate-900 font-medium">
                         Bea Materai & Administrasi Dokumen
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-slate-500 mt-0.5">
                         Legalisasi berkas perjanjian sewa resmi bermaterai lunas
                       </div>
                     </div>
-                    <div className="text-right font-mono text-white font-medium whitespace-nowrap pl-4">
+                    <div className="text-right font-mono text-slate-900 font-bold whitespace-nowrap pl-4">
                       {formatRupiah(materaiFee)}
                     </div>
                   </div>
 
                   {/* Item 4: Security Deposit */}
-                  <div className="flex items-start justify-between p-3 border border-[#D4AF37]/30 bg-[#D4AF37]/5">
+                  <div className="flex items-start justify-between p-3 border border-amber-300 bg-amber-50">
                     <div>
-                      <div className="text-[#D4AF37] font-medium flex items-center gap-1.5">
+                      <div className="text-[#855D00] font-bold flex items-center gap-1.5">
                         <ShieldCheck size={14} />
                         <span>Security Deposit Jaminan Unit (100% Refundable)</span>
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-slate-600 mt-0.5">
                         2 bulan sewa pokok, jaminan pemeliharaan (dikembalikan penuh di akhir sewa)
                       </div>
                     </div>
-                    <div className="text-right font-mono text-[#D4AF37] font-semibold text-sm whitespace-nowrap pl-4">
+                    <div className="text-right font-mono text-[#855D00] font-bold text-sm whitespace-nowrap pl-4">
                       {formatRupiah(securityDeposit)}
                     </div>
                   </div>
 
                   {/* Grand Total Bar */}
-                  <div className="flex items-center justify-between bg-[#D4AF37]/15 p-3.5 border border-[#D4AF37]/40 mt-3">
+                  <div className="flex items-center justify-between bg-white p-3.5 border-2 border-[#9A7B1C] mt-3 shadow-sm">
                     <div>
-                      <div className="text-xs font-mono uppercase tracking-wider text-[#F3E5AB] font-semibold">
+                      <div className="text-xs font-mono uppercase tracking-wider text-[#0F172A] font-bold">
                         Total Tagihan Pembayaran
                       </div>
-                      <div className="text-[10px] text-slate-400">
+                      <div className="text-[10px] text-slate-500">
                         Total sewa {tenureMonths} bulan + PPN 11% + materai + security deposit 2 bulan
                       </div>
                     </div>
-                    <div className="text-right font-mono text-xl sm:text-2xl text-[#D4AF37] font-bold">
+                    <div className="text-right font-mono text-xl sm:text-2xl text-[#855D00] font-bold">
                       {formatRupiah(initialTotalUpfront)}
                     </div>
                   </div>
@@ -663,57 +661,57 @@ Head of Leasing: Natasha Wijaya
               </div>
 
               {/* Bank Transfer Instructions & Executive Signatures */}
-              <div className="py-6 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+              <div className="py-6 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
                 <div>
-                  <div className="text-xs uppercase font-mono tracking-wider text-[#D4AF37] mb-2">
+                  <div className="text-xs uppercase font-mono tracking-wider text-[#855D00] font-bold mb-2">
                     Instruksi Pembayaran Resmi:
                   </div>
-                  <div className="bg-[#111827] p-3.5 border border-slate-800 text-xs space-y-1.5">
-                    <div className="flex justify-between text-slate-300">
-                      <span className="text-slate-400">Bank:</span>
-                      <span className="font-medium text-white">{OFFICIAL_BANK_INFO.bankName}</span>
+                  <div className="bg-amber-50/70 p-3.5 border border-amber-300 text-xs space-y-1.5">
+                    <div className="flex justify-between text-slate-700">
+                      <span className="text-slate-500">Bank:</span>
+                      <span className="font-bold text-slate-900">{OFFICIAL_BANK_INFO.bankName}</span>
                     </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span className="text-slate-400">Atas Nama:</span>
-                      <span className="font-medium text-white">{OFFICIAL_BANK_INFO.accountHolder}</span>
+                    <div className="flex justify-between text-slate-700">
+                      <span className="text-slate-500">Atas Nama:</span>
+                      <span className="font-bold text-slate-900">{OFFICIAL_BANK_INFO.accountHolder}</span>
                     </div>
-                    <div className="flex justify-between text-slate-300 pt-1 border-t border-slate-800">
-                      <span className="text-slate-400">No. Rekening:</span>
-                      <span className="font-mono text-[#F3E5AB] font-bold text-sm tracking-wider">{OFFICIAL_BANK_INFO.accountNumber}</span>
+                    <div className="flex justify-between text-slate-700 pt-1 border-t border-amber-200">
+                      <span className="text-slate-500">No. Rekening:</span>
+                      <span className="font-mono text-[#855D00] font-bold text-sm tracking-wider">{OFFICIAL_BANK_INFO.accountNumber}</span>
                     </div>
                   </div>
-                  <p className="text-[10px] text-amber-300 mt-2 font-mono">
-                    *PENTING: Sebelum transfer, wajib konfirmasi ketersediaan unit ke base @the_BASWARA. Sertakan nomor invoice <strong className="text-slate-200">{invoiceNumber}</strong> pada berita transfer.
+                  <p className="text-[11px] text-amber-800 mt-2 font-medium">
+                    *PENTING: Sebelum transfer, wajib konfirmasi ketersediaan unit ke base @the_BASWARA. Sertakan nomor invoice <strong className="text-slate-900">{invoiceNumber}</strong> pada berita transfer.
                   </p>
                 </div>
 
                 <div className="flex justify-between text-xs pt-2 sm:pt-0">
                   <div>
-                    <div className="text-[10px] font-mono uppercase text-slate-400 mb-6">
+                    <div className="text-[10px] font-mono uppercase text-slate-500 mb-6">
                       Menyetujui,
                     </div>
-                    <div className="font-serif text-white font-medium text-sm">
+                    <div className="font-serif text-slate-900 font-bold text-sm">
                       Marcelinus Chitraditya Lokananta Prabaswara
                     </div>
-                    <div className="text-[11px] text-[#D4AF37] font-mono">
+                    <div className="text-[11px] text-[#855D00] font-mono font-bold">
                       CEO
                     </div>
-                    <div className="text-[10px] text-slate-400">
+                    <div className="text-[10px] text-slate-500">
                       PT Baswara Mangkubumi
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-[10px] font-mono uppercase text-slate-400 mb-6">
+                    <div className="text-[10px] font-mono uppercase text-slate-500 mb-6">
                       Otorisasi Leasing,
                     </div>
-                    <div className="font-serif text-white font-medium text-sm">
+                    <div className="font-serif text-slate-900 font-bold text-sm">
                       Natasha Wijaya
                     </div>
-                    <div className="text-[11px] text-[#D4AF37] font-mono">
+                    <div className="text-[11px] text-[#855D00] font-mono font-bold">
                       Head of Leasing
                     </div>
-                    <div className="text-[10px] text-slate-400">
+                    <div className="text-[10px] text-slate-500">
                       Leasing Division
                     </div>
                   </div>
@@ -727,7 +725,7 @@ Head of Leasing: Natasha Wijaya
               <button
                 type="button"
                 onClick={() => setActiveTab('calculator')}
-                className="py-3 px-4 border border-slate-700 text-xs tracking-wider uppercase text-slate-200 hover:text-white transition-colors flex items-center justify-center gap-2"
+                className="py-3 px-4 border-2 border-slate-300 text-xs tracking-wider uppercase text-slate-800 bg-white hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 font-bold cursor-pointer shadow-sm"
               >
                 <Calculator size={14} />
                 <span>Ubah Perhitungan Kalkulator</span>
@@ -739,7 +737,7 @@ Head of Leasing: Natasha Wijaya
                   onClose();
                   onProceedToBooking(quoteData);
                 }}
-                className="flex-1 py-3 px-4 bg-[#D4AF37] hover:bg-[#F3E5AB] text-[#0B0F19] text-xs font-semibold tracking-wider uppercase transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                className="flex-1 py-3 px-4 bg-[#9A7B1C] hover:bg-[#806411] text-white text-xs font-bold tracking-wider uppercase transition-colors flex items-center justify-center gap-2 shadow-md cursor-pointer"
               >
                 <span>Lanjut ke Pengisian Formulir (Kaitkan Invoice #{invoiceNumber})</span>
                 <ArrowRight size={14} />

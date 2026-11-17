@@ -13,6 +13,7 @@ export interface ReceiptData {
   tenureMonths: number;
   totalAmount: number;
   paymentMethod?: string;
+  invoice?: QuoteData;
 }
 
 export interface SaveInvoiceToDriveParams {
@@ -449,11 +450,27 @@ export function generateInvoiceHtml(
       </table>
     </div>
 
-    <!-- Tenancy Terms & Legal Authorization (No Payment Methods) -->
+    <!-- Official Bank Account Info -->
+    <div class="bank-card" style="margin-bottom: 24px;">
+      <div class="section-label">Rekening Pembayaran Resmi (Transfer Bank):</div>
+      <div class="bank-row">
+        <span style="color: #94A3B8;">Bank Tujuan:</span>
+        <strong style="color: #FFFFFF;">Bank ${OFFICIAL_BANK_INFO.bankName}</strong>
+      </div>
+      <div class="bank-row">
+        <span style="color: #94A3B8;">Atas Nama:</span>
+        <strong style="color: #FFFFFF;">${OFFICIAL_BANK_INFO.accountHolder}</strong>
+      </div>
+      <div class="bank-row account">
+        <span style="color: #94A3B8; font-weight: 400; font-size: 12px;">Nomor Rekening:</span>
+        <span>${OFFICIAL_BANK_INFO.accountNumber}</span>
+      </div>
+    </div>
+
+    <!-- Tenancy Terms & Legal Authorization -->
     <div style="margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #1E293B;">
       <div class="section-label">Ketentuan Resmi Penagihan & Legalitas Dokumen:</div>
       <div style="background: #0B0F19; border: 1px solid rgba(212, 175, 55, 0.3); padding: 18px; font-size: 12px; color: #CBD5E1; line-height: 1.6;">
-        <p style="margin-bottom: 8px; color: #FBBF24; font-weight: 600;">✦ PENTING: Sebelum melakukan pembayaran, wajib konfirmasi terlebih dahulu ke akun base resmi (@the_BASWARA) untuk memastikan ketersediaan (availability) unit.</p>
         <p style="margin-bottom: 6px;">1. Dokumen invoice ini merupakan bukti penagihan sah yang diterbitkan oleh PT Baswara Mangkubumi Residence.</p>
         <p style="margin-bottom: 6px;">2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.</p>
         <p>3. Serah terima unit hunian dan legalisasi berkas perjanjian sewa resmi berlaku efektif setelah konfirmasi leasing.</p>
@@ -502,8 +519,8 @@ export interface DriveInvoiceResult {
 }
 
 /**
- * Generates an executive, high-resolution 1200x1600 JPG Data URL for the official invoice.
- * Completely standalone using HTML5 Canvas 2D API - guaranteed 100% success rate without DOM dependency.
+ * Generates an executive, high-resolution 1200x1600 JPG Data URL for the official invoice (Status: Belum Dibayar).
+ * Styled like authentic high-end corporate billing on ivory textured parchment paper.
  */
 export function generateInvoiceJpegDataUrl(
   invoice: QuoteData,
@@ -518,264 +535,353 @@ export function generateInvoiceJpegDataUrl(
     throw new Error('Canvas 2D context not available');
   }
 
-  // Background
-  ctx.fillStyle = '#0B0F19';
+  // 1. Realistic crisp warm alabaster / parchment paper background
+  ctx.fillStyle = '#FCFBF9';
   ctx.fillRect(0, 0, 1200, 1600);
 
-  // Outer gold border
-  ctx.strokeStyle = '#D4AF37';
+  // Subtle luxury border frame
+  ctx.strokeStyle = '#855D00';
   ctx.lineWidth = 3;
   ctx.strokeRect(40, 40, 1120, 1520);
 
-  // Inner thin border
-  ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+  ctx.strokeStyle = '#D4AF37';
   ctx.lineWidth = 1;
-  ctx.strokeRect(50, 50, 1100, 1500);
+  ctx.strokeRect(48, 48, 1104, 1504);
 
-  // Title
-  ctx.fillStyle = '#F3E5AB';
+  // Decorative corner accents
+  const drawCorner = (x: number, y: number, dx: number, dy: number) => {
+    ctx.strokeStyle = '#855D00';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y + dy * 20);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + dx * 20, y);
+    ctx.stroke();
+  };
+  drawCorner(55, 55, 1, 1);
+  drawCorner(1145, 55, -1, 1);
+  drawCorner(55, 1545, 1, -1);
+  drawCorner(1145, 1545, -1, -1);
+
+  // Header Brand
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('PT BASWARA MANGKUBUMI RESIDENCE  ·  PRABASWARA GROUP', 80, 100);
+
+  ctx.fillStyle = '#0F172A';
   ctx.font = 'bold 36px serif';
-  ctx.fillText('THE BASWARA SKY SUITES', 80, 120);
+  ctx.fillText('THE BASWARA SKY SUITES', 80, 140);
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '16px sans-serif';
-  ctx.fillText('Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat 10310', 80, 155);
+  ctx.fillStyle = '#475569';
+  ctx.font = '15px sans-serif';
+  ctx.fillText('Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat 10310', 80, 170);
 
-  // Invoice Number & Dates
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = 'bold 20px monospace';
-  ctx.fillText(`NO: ${invoice.invoiceNumber}`, 780, 120);
+  // Invoice Meta Box (Right aligned)
+  ctx.fillStyle = '#F8F5EE';
+  ctx.fillRect(740, 75, 380, 115);
+  ctx.strokeStyle = '#D8CEBA';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(740, 75, 380, 115);
 
-  ctx.fillStyle = '#CBD5E1';
-  ctx.font = '16px sans-serif';
-  ctx.fillText(`Tanggal Terbit: ${invoice.issueDate}`, 780, 150);
-  ctx.fillStyle = '#F59E0B';
-  ctx.fillText(`Jatuh Tempo: ${invoice.dueDate} (7 Hari)`, 780, 178);
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 18px monospace';
+  ctx.fillText(`INVOICE: ${invoice.invoiceNumber}`, 760, 108);
 
-  // Divider line
-  ctx.strokeStyle = '#1E293B';
-  ctx.beginPath();
-  ctx.moveTo(80, 210);
-  ctx.lineTo(1120, 210);
-  ctx.stroke();
+  ctx.fillStyle = '#334155';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(`Tanggal Terbit : ${invoice.issueDate}`, 760, 138);
 
-  // Tenant Info
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = '14px monospace';
-  ctx.fillText('DITAGIHKAN KEPADA:', 80, 250);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 24px serif';
-  ctx.fillText(tenantName, 80, 285);
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = '16px monospace';
-  ctx.fillText(tenantXHandle, 80, 315);
+  ctx.fillStyle = '#B45309';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(`Jatuh Tempo    : ${invoice.dueDate} (7 Hari)`, 760, 166);
 
-  // Unit Info
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = '14px monospace';
-  ctx.fillText('SPESIFIKASI UNIT & SEWA:', 650, 250);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 20px serif';
-  ctx.fillText(`${invoice.unit.name} · Tower ${invoice.unit.tower}`, 650, 285);
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '16px sans-serif';
-  ctx.fillText(`Masa Sewa: ${invoice.tenureMonths} Bulan`, 650, 315);
+  // Prominent Status Banner
+  ctx.fillStyle = '#FEF3C7';
+  ctx.fillRect(80, 210, 1040, 48);
+  ctx.strokeStyle = '#F59E0B';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(80, 210, 1040, 48);
 
-  // Divider line
-  ctx.strokeStyle = '#1E293B';
-  ctx.beginPath();
-  ctx.moveTo(80, 360);
-  ctx.lineTo(1120, 360);
-  ctx.stroke();
+  ctx.fillStyle = '#92400E';
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('STATUS: BELUM DIBAYAR', 105, 240);
 
-  // Table header
-  ctx.fillStyle = '#111827';
-  ctx.fillRect(80, 390, 1040, 50);
-  ctx.fillStyle = '#D4AF37';
+  // Client & Unit Information Grid
+  ctx.fillStyle = '#F8F5EE';
+  ctx.fillRect(80, 275, 510, 110);
+  ctx.strokeStyle = '#E2D9C8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(80, 275, 510, 110);
+
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('DITAGIHKAN KEPADA (CALON PENYEWA):', 98, 302);
+  ctx.fillStyle = '#0F172A';
+  ctx.font = 'bold 22px serif';
+  ctx.fillText(tenantName, 98, 335);
+  ctx.fillStyle = '#855D00';
   ctx.font = 'bold 15px monospace';
-  ctx.fillText('DESKRIPSI TAGIHAN', 100, 422);
-  ctx.fillText('TOTAL (IDR)', 950, 422);
+  ctx.fillText(tenantXHandle, 98, 365);
 
-  // Table items
+  ctx.fillStyle = '#F8F5EE';
+  ctx.fillRect(610, 275, 510, 110);
+  ctx.strokeStyle = '#E2D9C8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(610, 275, 510, 110);
+
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('SPESIFIKASI UNIT & MASA KONTRAK:', 628, 302);
+  ctx.fillStyle = '#0F172A';
+  ctx.font = 'bold 20px serif';
+  ctx.fillText(`${invoice.unit.name} · Tower ${invoice.unit.tower}`, 628, 335);
+  ctx.fillStyle = '#334155';
+  ctx.font = '15px sans-serif';
+  ctx.fillText(`Masa Sewa: ${invoice.tenureMonths} Bulan  ·  Luas: ${invoice.unit.sizeM2} m²`, 628, 365);
+
+  // Table Header
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(80, 410, 1040, 46);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 14px monospace';
+  ctx.fillText('DESKRIPSI RINCIAN PENAGIHAN', 100, 439);
+  ctx.fillText('TOTAL (IDR)', 950, 439);
+
+  // Format Helper
   const formatIdr = (val: number) =>
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
   const baseMonthly = invoice.baseMonthly || (invoice.unit?.pricePerMonth ?? Math.round(invoice.discountedMonthly / (1 - (invoice.discountRate || 0))));
   const grossRent = baseMonthly * invoice.tenureMonths;
   const effectiveDiscountRate = invoice.discountRate || (invoice.tenureMonths === 12 ? 0.10 : invoice.tenureMonths === 6 ? 0.05 : 0);
-  const discountAmount = effectiveDiscountRate > 0
-    ? Math.round(grossRent * effectiveDiscountRate)
-    : 0;
+  const discountAmount = effectiveDiscountRate > 0 ? Math.round(grossRent * effectiveDiscountRate) : 0;
 
-  let y = 475;
-  const rowHeight = 50;
+  let y = 495;
+  const rowHeight = 52;
 
-  // 1. Sewa Pokok Unit (Tarif Standar / Gross)
-  ctx.fillStyle = '#E2E8F0';
-  ctx.font = '17px sans-serif';
-  ctx.fillText(`Sewa Pokok Unit (${invoice.tenureMonths} Bulan)`, 100, y);
-  ctx.font = 'bold 18px monospace';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(formatIdr(effectiveDiscountRate > 0 ? grossRent : (invoice.totalRentForTenure || (invoice.discountedMonthly * invoice.tenureMonths))), 920, y);
-  y += rowHeight;
+  // Row 1: Sewa Pokok
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`Sewa Pokok Unit (${invoice.unit.name}) - ${invoice.tenureMonths} Bulan`, 100, y);
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.fillText(`Tarif Pokok Rp ${baseMonthly.toLocaleString('id-ID')}/bln × ${invoice.tenureMonths} Bulan`, 100, y + 20);
 
-  // 2. Diskon Komitmen Tenor (Jika ada diskon 6 bulan 5% atau 12 bulan 10%)
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText(formatIdr(effectiveDiscountRate > 0 ? grossRent : (invoice.totalRentForTenure || (invoice.discountedMonthly * invoice.tenureMonths))), 920, y + 8);
+  
+  // Row line
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(80, y + 34);
+  ctx.lineTo(1120, y + 34);
+  ctx.stroke();
+
+  y += rowHeight + 10;
+
+  // Row 2: Diskon jika ada
   if (effectiveDiscountRate > 0 && discountAmount > 0) {
     const discountPercent = Math.round(effectiveDiscountRate * 100);
-    // Row background highlight for discount
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.10)';
-    ctx.fillRect(80, y - 32, 1040, 42);
-    ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(80, y - 32, 1040, 42);
+    ctx.fillStyle = '#ECFDF5';
+    ctx.fillRect(80, y - 18, 1040, 46);
+    ctx.strokeStyle = '#A7F3D0';
+    ctx.strokeRect(80, y - 18, 1040, 46);
 
-    ctx.fillStyle = '#34D399';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText(`✦ Diskon Komitmen Masa Sewa (${discountPercent}% · ${invoice.tenureMonths} Bulan)`, 100, y - 6);
-    ctx.font = 'bold 18px monospace';
-    ctx.fillText(`- ${formatIdr(discountAmount)}`, 920, y - 6);
+    ctx.fillStyle = '#065F46';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(`✦ Diskon Komitmen Masa Sewa (${discountPercent}% · ${invoice.tenureMonths} Bulan)`, 100, y + 10);
+    ctx.font = 'bold 17px monospace';
+    ctx.fillText(`- ${formatIdr(discountAmount)}`, 920, y + 10);
+
     y += rowHeight;
   }
 
-  // 3. Pajak Pertambahan Nilai (PPN 11%)
-  ctx.fillStyle = '#E2E8F0';
-  ctx.font = '17px sans-serif';
+  // Row 3: PPN 11%
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 16px sans-serif';
   ctx.fillText('Pajak Pertambahan Nilai (PPN 11%)', 100, y);
-  ctx.font = 'bold 18px monospace';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(formatIdr(invoice.ppnAmount || Math.round((invoice.totalRentForTenure || 0) * 0.11)), 920, y);
-  y += rowHeight;
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.fillText('11% dari total nilai sewa unit apartemen', 100, y + 20);
 
-  // 4. Bea Materai & Administrasi
-  ctx.fillStyle = '#E2E8F0';
-  ctx.font = '17px sans-serif';
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText(formatIdr(invoice.ppnAmount || Math.round((invoice.totalRentForTenure || 0) * 0.11)), 920, y + 8);
+
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.moveTo(80, y + 34);
+  ctx.lineTo(1120, y + 34);
+  ctx.stroke();
+
+  y += rowHeight + 10;
+
+  // Row 4: Bea Materai
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 16px sans-serif';
   ctx.fillText('Bea Materai & Administrasi Legalisasi Dokumen', 100, y);
-  ctx.font = 'bold 18px monospace';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(formatIdr(invoice.materaiFee || 10000), 920, y);
-  y += rowHeight;
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.fillText('Legalisasi perjanjian sewa resmi bermaterai lunas', 100, y + 20);
 
-  // 5. Security Deposit
-  ctx.fillStyle = '#E2E8F0';
-  ctx.font = '17px sans-serif';
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText(formatIdr(invoice.materaiFee || 10000), 920, y + 8);
+
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.moveTo(80, y + 34);
+  ctx.lineTo(1120, y + 34);
+  ctx.stroke();
+
+  y += rowHeight + 10;
+
+  // Row 5: Security Deposit
+  ctx.fillStyle = '#78350F';
+  ctx.font = 'bold 16px sans-serif';
   ctx.fillText('Security Deposit Jaminan (100% Refundable · 2 Bln Sewa Pokok)', 100, y);
-  ctx.font = 'bold 18px monospace';
-  ctx.fillStyle = '#D4AF37';
-  ctx.fillText(formatIdr(invoice.securityDeposit), 920, y);
-  y += 45;
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#92400E';
+  ctx.fillText('Jaminan pemeliharaan unit, dikembalikan penuh di akhir masa sewa', 100, y + 20);
 
-  // Grand Total box
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#855D00';
+  ctx.fillText(formatIdr(invoice.securityDeposit), 920, y + 8);
+
+  y += 50;
+
+  // Grand Total Box
   const totalBoxY = y;
-  ctx.fillStyle = 'rgba(212, 175, 55, 0.15)';
-  ctx.fillRect(80, totalBoxY, 1040, 75);
-  ctx.strokeStyle = '#D4AF37';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(80, totalBoxY, 1040, 75);
-  ctx.fillStyle = '#F3E5AB';
+  ctx.fillStyle = '#F8F5EE';
+  ctx.fillRect(80, totalBoxY, 1040, 80);
+  ctx.strokeStyle = '#855D00';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(80, totalBoxY, 1040, 80);
+
+  ctx.fillStyle = '#0F172A';
   ctx.font = 'bold 18px monospace';
-  ctx.fillText('TOTAL TAGIHAN PEMBAYARAN:', 110, totalBoxY + 46);
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = 'bold 28px monospace';
-  ctx.fillText(formatIdr(invoice.initialTotalUpfront), 800, totalBoxY + 48);
+  ctx.fillText('TOTAL TAGIHAN PEMBAYARAN:', 110, totalBoxY + 48);
 
-  // Status Badge: BELUM DIBAYAR / PAYMENT PENDING
-  ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
-  ctx.fillRect(780, 215, 340, 42);
-  ctx.strokeStyle = '#F59E0B';
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 30px monospace';
+  ctx.fillText(formatIdr(invoice.initialTotalUpfront), 780, totalBoxY + 50);
+
+  // Official Bank Account Box
+  const bankBoxY = totalBoxY + 95;
+  ctx.fillStyle = '#F8F5EE';
+  ctx.fillRect(80, bankBoxY, 1040, 92);
+  ctx.strokeStyle = '#855D00';
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(780, 215, 340, 42);
-  ctx.fillStyle = '#FBBF24';
-  ctx.font = 'bold 15px monospace';
-  ctx.fillText('STATUS: BELUM DIBAYAR (PENDING)', 795, 242);
+  ctx.strokeRect(80, bankBoxY, 1040, 92);
 
-  // Ketentuan Penagihan & Legalitas (Menggantikan cara pembayaran sesuai permintaan)
-  const legalBoxY = totalBoxY + 100;
-  ctx.fillStyle = '#111827';
-  ctx.fillRect(80, legalBoxY, 1040, 165);
-  ctx.strokeStyle = '#1E293B';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(80, legalBoxY, 1040, 165);
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('REKENING PEMBAYARAN RESMI (TRANSFER BANK):', 105, bankBoxY + 26);
 
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = 'bold 14px monospace';
-  ctx.fillText('KETENTUAN RESMI PENAGIHAN & LEGALITAS DOKUMEN:', 110, legalBoxY + 30);
-
-  ctx.fillStyle = '#FBBF24';
-  ctx.font = 'bold 14px sans-serif';
-  ctx.fillText('✦ PENTING: Sebelum melakukan pembayaran, wajib konfirmasi ke base @the_BASWARA apakah unit available.', 110, legalBoxY + 58);
-
-  ctx.fillStyle = '#E2E8F0';
+  ctx.fillStyle = '#334155';
   ctx.font = '14px sans-serif';
-  ctx.fillText('1. Dokumen invoice ini merupakan bukti penagihan sah yang diterbitkan oleh PT Baswara Mangkubumi Residence.', 110, legalBoxY + 88);
-  ctx.fillText('2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.', 110, legalBoxY + 116);
-  ctx.fillText('3. Serah terima unit hunian dan akses kartu resmi diproses setelah verifikasi leasing dikonfirmasi.', 110, legalBoxY + 144);
+  ctx.fillText(`Bank ${OFFICIAL_BANK_INFO.bankName}  ·  a/n ${OFFICIAL_BANK_INFO.accountHolder}`, 105, bankBoxY + 54);
+
+  ctx.fillStyle = '#64748B';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`Cantumkan nomor invoice (${invoice.invoiceNumber}) pada berita transfer`, 105, bankBoxY + 76);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#64748B';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('NOMOR REKENING RESMI:', 1095, bankBoxY + 30);
+
+  ctx.fillStyle = '#0F172A';
+  ctx.font = 'bold 24px monospace';
+  ctx.fillText(OFFICIAL_BANK_INFO.accountNumber, 1095, bankBoxY + 64);
+  ctx.textAlign = 'left';
+
+  // Legal Terms Box
+  const legalBoxY = bankBoxY + 110;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(80, legalBoxY, 1040, 126);
+  ctx.strokeStyle = '#E2D9C8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(80, legalBoxY, 1040, 126);
+
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 13px monospace';
+  ctx.fillText('KETENTUAN RESMI PENAGIHAN & LEGALITAS DOKUMEN:', 105, legalBoxY + 28);
+
+  ctx.fillStyle = '#334155';
+  ctx.font = '14px sans-serif';
+  ctx.fillText('1. Dokumen invoice ini merupakan bukti penagihan sah yang diterbitkan oleh PT Baswara Mangkubumi Residence.', 105, legalBoxY + 56);
+  ctx.fillText('2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.', 105, legalBoxY + 82);
+  ctx.fillText('3. Serah terima kunci unit hunian dan kartu akses resmi diproses setelah verifikasi leasing dikonfirmasi.', 105, legalBoxY + 108);
 
   // Official Gold Seal Stamp
   ctx.save();
-  ctx.translate(600, 1260);
-  ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+  ctx.translate(600, 1310);
+  ctx.strokeStyle = 'rgba(133, 93, 0, 0.45)';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.arc(0, 0, 65, 0, Math.PI * 2);
+  ctx.arc(0, 0, 68, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.strokeStyle = 'rgba(212, 175, 55, 0.25)';
+  ctx.strokeStyle = 'rgba(133, 93, 0, 0.3)';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 3]);
   ctx.beginPath();
-  ctx.arc(0, 0, 56, 0, Math.PI * 2);
+  ctx.arc(0, 0, 58, 0, Math.PI * 2);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.fillStyle = '#D4AF37';
+  ctx.fillStyle = '#855D00';
   ctx.font = 'bold 9px monospace';
   ctx.textAlign = 'center';
   ctx.fillText('PT BASWARA MANGKUBUMI', 0, -32);
   ctx.fillText('RESIDENCE', 0, -20);
-  ctx.fillStyle = '#F3E5AB';
+  ctx.fillStyle = '#0F172A';
   ctx.font = 'bold 18px serif';
   ctx.fillText('OFFICIAL', 0, 6);
-  ctx.fillStyle = '#D4AF37';
+  ctx.fillStyle = '#855D00';
   ctx.font = 'bold 9px monospace';
   ctx.fillText('LEASING DIVISION', 0, 24);
-  ctx.fillText('★ JAKARTA PUSAT ★', 0, 36);
+  ctx.fillText('★ JAKARTA PUSAT ★', 0, 38);
   ctx.restore();
 
   // Signatures
-  const sigY = 1200;
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '14px monospace';
+  const sigY = 1270;
+  ctx.fillStyle = '#64748B';
+  ctx.font = 'bold 13px monospace';
   ctx.textAlign = 'left';
   ctx.fillText('MENGETAHUI & MENYETUJUI,', 100, sigY);
   ctx.fillText('OTORISASI LEASING,', 780, sigY);
 
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = '#0F172A';
   ctx.font = 'bold 22px serif';
-  ctx.fillText('Marcelinus Chitraditya Lokananta Prabaswara', 100, sigY + 55);
-  ctx.fillText('Natasha Wijaya', 780, sigY + 55);
+  ctx.fillText('Marcelinus Chitraditya Lokananta Prabaswara', 100, sigY + 50);
+  ctx.fillText('Natasha Wijaya', 780, sigY + 50);
 
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = '15px monospace';
-  ctx.fillText('Chief Executive Officer (CEO)', 100, sigY + 82);
-  ctx.fillText('Head of Leasing', 780, sigY + 82);
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 14px monospace';
+  ctx.fillText('Chief Executive Officer (CEO)', 100, sigY + 76);
+  ctx.fillText('Head of Leasing', 780, sigY + 76);
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '14px sans-serif';
-  ctx.fillText('PT Baswara Mangkubumi Residence', 100, sigY + 108);
-  ctx.fillText('Baswara Sky Suites Leasing Division', 780, sigY + 108);
+  ctx.fillStyle = '#64748B';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('PT Baswara Mangkubumi Residence', 100, sigY + 100);
+  ctx.fillText('Baswara Sky Suites Leasing Division', 780, sigY + 100);
 
   // Footer text
-  ctx.fillStyle = '#64748B';
+  ctx.fillStyle = '#94A3B8';
   ctx.font = '12px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('THE BASWARA SKY SUITES · PT BASWARA MANGKUBUMI RESIDENCE · OFFICIAL TENANCY BILLING', 600, 1500);
+  ctx.fillText('THE BASWARA SKY SUITES · PT BASWARA MANGKUBUMI RESIDENCE · OFFICIAL TENANCY BILLING', 600, 1530);
 
   return canvas.toDataURL('image/jpeg', 0.95);
 }
 
 /**
- * Generates an executive, high-resolution 1200x1600 JPG Data URL for the official payment receipt (KUITANSI PEMBAYARAN LUNAS).
- * Features authoritative gold/emerald seal stamp, legal wording, Indonesian terbilang, and executive signatures.
+ * Generates an authoritative, high-resolution 1200x1600 JPG Data URL for the official payment receipt (KUITANSI PEMBAYARAN LUNAS).
+ * Styled on crisp warm alabaster / parchment paper (#FCFBF9) with the exact matching itemized table and an emerald & gold "LUNAS / FULLY PAID" seal.
  */
 export function generateReceiptJpegDataUrl(
   receipt: ReceiptData,
@@ -790,193 +896,360 @@ export function generateReceiptJpegDataUrl(
     throw new Error('Canvas 2D context not available');
   }
 
-  // Background - Deep Luxury Navy Noir
-  ctx.fillStyle = '#080C14';
+  // 1. Warm alabaster textured paper background
+  ctx.fillStyle = '#FCFBF9';
   ctx.fillRect(0, 0, 1200, 1600);
 
-  // Outer gold borders
-  ctx.strokeStyle = '#D4AF37';
+  // Outer emerald & gold borders
+  ctx.strokeStyle = '#059669';
   ctx.lineWidth = 3;
   ctx.strokeRect(40, 40, 1120, 1520);
 
-  ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
+  ctx.strokeStyle = '#D4AF37';
   ctx.lineWidth = 1;
-  ctx.strokeRect(50, 50, 1100, 1500);
+  ctx.strokeRect(48, 48, 1104, 1504);
 
-  // Header
-  ctx.fillStyle = '#F3E5AB';
+  // Decorative corner accents
+  const drawCorner = (x: number, y: number, dx: number, dy: number) => {
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y + dy * 20);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + dx * 20, y);
+    ctx.stroke();
+  };
+  drawCorner(55, 55, 1, 1);
+  drawCorner(1145, 55, -1, 1);
+  drawCorner(55, 1545, 1, -1);
+  drawCorner(1145, 1545, -1, -1);
+
+  // Header Brand
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('PT BASWARA MANGKUBUMI RESIDENCE  ·  PRABASWARA GROUP', 80, 100);
+
+  ctx.fillStyle = '#0F172A';
   ctx.font = 'bold 36px serif';
-  ctx.fillText('THE BASWARA SKY SUITES', 80, 120);
+  ctx.fillText('THE BASWARA SKY SUITES', 80, 140);
 
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = '#475569';
   ctx.font = '15px sans-serif';
-  ctx.fillText('PT BASWARA MANGKUBUMI RESIDENCE · Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat 10310', 80, 155);
+  ctx.fillText('Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat 10310', 80, 170);
 
-  // Document Title Header
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
-  ctx.fillRect(80, 190, 1040, 65);
-  ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+  // Receipt Meta Box (Right aligned)
+  ctx.fillStyle = '#ECFDF5';
+  ctx.fillRect(740, 75, 380, 115);
+  ctx.strokeStyle = '#059669';
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(80, 190, 1040, 65);
+  ctx.strokeRect(740, 75, 380, 115);
 
-  ctx.fillStyle = '#34D399';
-  ctx.font = 'bold 24px serif';
-  ctx.fillText('KUITANSI RESMI PEMBAYARAN SEWA (OFFICIAL RECEIPT)', 105, 232);
+  ctx.fillStyle = '#065F46';
+  ctx.font = 'bold 17px monospace';
+  ctx.fillText(`KUITANSI: ${receipt.receiptNumber}`, 755, 108);
 
-  // Receipt & Invoice Metadata
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = 'bold 18px monospace';
-  ctx.fillText(`NO KUITANSI: ${receipt.receiptNumber}`, 80, 300);
+  ctx.fillStyle = '#334155';
+  ctx.font = '13px monospace';
+  ctx.fillText(`Ref. Invoice : ${receipt.invoiceNumber}`, 755, 136);
 
-  ctx.fillStyle = '#CBD5E1';
-  ctx.font = '15px monospace';
-  ctx.fillText(`Ref. Invoice: ${receipt.invoiceNumber}`, 80, 330);
-  ctx.fillText(`Tanggal Pelunasan: ${receipt.paymentDate}`, 80, 360);
+  ctx.fillStyle = '#047857';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(`Tgl Pelunasan: ${receipt.paymentDate}`, 755, 164);
 
-  // Prominent "LUNAS / PAID" Official Seal Badge at top right
-  ctx.save();
-  ctx.translate(920, 320);
-  // Outer circle
-  ctx.strokeStyle = '#10B981';
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(0, 0, 85, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Inner dashed circle
-  ctx.strokeStyle = '#34D399';
+  // Prominent "LUNAS / FULLY PAID" Status Banner
+  ctx.fillStyle = '#ECFDF5';
+  ctx.fillRect(80, 210, 1040, 48);
+  ctx.strokeStyle = '#059669';
   ctx.lineWidth = 2;
-  ctx.setLineDash([6, 4]);
-  ctx.beginPath();
-  ctx.arc(0, 0, 75, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.strokeRect(80, 210, 1040, 48);
 
-  // Seal text
-  ctx.fillStyle = '#6EE7B7';
-  ctx.font = 'bold 11px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('THE BASWARA SKY SUITES', 0, -45);
-  ctx.fillText('ESCROW VERIFIED', 0, 50);
+  ctx.fillStyle = '#065F46';
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('STATUS: LUNAS', 105, 240);
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 34px serif';
-  ctx.fillText('LUNAS', 0, 8);
-  ctx.font = 'bold 13px monospace';
-  ctx.fillStyle = '#10B981';
-  ctx.fillText('★ FULLY PAID ★', 0, 28);
-  ctx.restore();
-
-  // Divider line
-  ctx.strokeStyle = '#1E293B';
+  // Client & Unit Information Grid
+  ctx.fillStyle = '#F8F5EE';
+  ctx.fillRect(80, 275, 510, 110);
+  ctx.strokeStyle = '#E2D9C8';
   ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(80, 420);
-  ctx.lineTo(1120, 420);
-  ctx.stroke();
+  ctx.strokeRect(80, 275, 510, 110);
 
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('TELAH DITERIMA DARI (PENYEWA):', 98, 302);
+  ctx.fillStyle = '#0F172A';
+  ctx.font = 'bold 22px serif';
+  ctx.fillText(tenantName, 98, 335);
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 15px monospace';
+  ctx.fillText(tenantXHandle, 98, 365);
+
+  ctx.fillStyle = '#F8F5EE';
+  ctx.fillRect(610, 275, 510, 110);
+  ctx.strokeStyle = '#E2D9C8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(610, 275, 510, 110);
+
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('SPESIFIKASI UNIT & MASA KONTRAK:', 628, 302);
+  ctx.fillStyle = '#0F172A';
+  ctx.font = 'bold 20px serif';
+  ctx.fillText(`${receipt.unitName} · Tower ${receipt.tower}`, 628, 335);
+  ctx.fillStyle = '#334155';
+  ctx.font = '15px sans-serif';
+  ctx.fillText(`Masa Sewa: ${receipt.tenureMonths} Bulan  ·  Status Pembayaran: LUNAS`, 628, 365);
+
+  // Table Header
+  ctx.fillStyle = '#065F46';
+  ctx.fillRect(80, 410, 1040, 46);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 14px monospace';
+  ctx.fillText('DESKRIPSI RINCIAN PEMBAYARAN LUNAS', 100, 439);
+  ctx.fillText('TOTAL TERBAYAR (IDR)', 880, 439);
+
+  // Format Helper
   const formatIdr = (val: number) =>
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
-  // Field 1: Telah Diterima Dari
-  let curY = 470;
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '14px monospace';
-  ctx.fillText('TELAH DITERIMA DARI:', 80, curY);
+  // Financial calculations from attached quote or reconstructed
+  const inv = receipt.invoice;
+  const tenure = receipt.tenureMonths || 3;
+  const effectiveDiscountRate = inv ? (inv.discountRate || (tenure === 12 ? 0.10 : tenure === 6 ? 0.05 : 0)) : (tenure === 12 ? 0.10 : tenure === 6 ? 0.05 : 0);
+  
+  // Reconstruct if inv not present:
+  let totalUpfront = receipt.totalAmount;
+  let baseMonthly = inv ? inv.baseMonthly : 0;
+  let discountedMonthly = inv ? inv.discountedMonthly : 0;
+  let discountAmount = 0;
+  let totalRent = 0;
+  let ppn = 0;
+  let materai = 10000;
+  let securityDeposit = 0;
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 24px serif';
-  ctx.fillText(tenantName, 80, curY + 36);
+  if (inv) {
+    baseMonthly = inv.baseMonthly;
+    discountedMonthly = inv.discountedMonthly;
+    const grossRent = baseMonthly * tenure;
+    discountAmount = effectiveDiscountRate > 0 ? Math.round(grossRent * effectiveDiscountRate) : 0;
+    totalRent = inv.totalRentForTenure || (discountedMonthly * tenure);
+    ppn = inv.ppnAmount || Math.round(totalRent * 0.11);
+    materai = inv.materaiFee || 10000;
+    securityDeposit = inv.securityDeposit;
+    totalUpfront = inv.initialTotalUpfront;
+  } else {
+    // Math approximation from totalUpfront = totalRent + 0.11*totalRent + 10000 + 2*discountedMonthly
+    // totalRent = discountedMonthly * tenure => totalUpfront = discountedMonthly*(1.11*tenure + 2) + 10000
+    const factor = (1.11 * tenure + 2);
+    discountedMonthly = Math.round((totalUpfront - 10000) / factor);
+    baseMonthly = effectiveDiscountRate > 0 ? Math.round(discountedMonthly / (1 - effectiveDiscountRate)) : discountedMonthly;
+    const grossRent = baseMonthly * tenure;
+    discountAmount = effectiveDiscountRate > 0 ? Math.round(grossRent * effectiveDiscountRate) : 0;
+    totalRent = discountedMonthly * tenure;
+    ppn = Math.round(totalRent * 0.11);
+    securityDeposit = discountedMonthly * 2;
+  }
 
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = '16px monospace';
-  ctx.fillText(tenantXHandle, 80, curY + 66);
+  const grossRent = baseMonthly * tenure;
 
-  // Field 2: Uang Sejumlah (Nominal)
-  curY = 600;
-  ctx.fillStyle = 'rgba(212, 175, 55, 0.12)';
-  ctx.fillRect(80, curY, 1040, 90);
-  ctx.strokeStyle = '#D4AF37';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(80, curY, 1040, 90);
+  let y = 495;
+  const rowHeight = 52;
 
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = 'bold 15px monospace';
-  ctx.fillText('UANG SEJUMLAH (IDR):', 110, curY + 35);
-
-  ctx.fillStyle = '#F3E5AB';
-  ctx.font = 'bold 36px monospace';
-  ctx.fillText(formatIdr(receipt.totalAmount), 110, curY + 75);
-
-  // Field 3: Terbilang
-  curY = 730;
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '14px monospace';
-  ctx.fillText('TERBILANG:', 80, curY);
-
-  ctx.fillStyle = '#E2E8F0';
-  ctx.font = 'italic 18px serif';
-  const terbilangText = `# ${numberToIndonesianWords(receipt.totalAmount)} #`;
-  ctx.fillText(terbilangText, 80, curY + 35);
-
-  // Field 4: Untuk Pembayaran
-  curY = 820;
-  ctx.fillStyle = '#111827';
-  ctx.fillRect(80, curY, 1040, 160);
-  ctx.strokeStyle = '#1E293B';
-  ctx.strokeRect(80, curY, 1040, 160);
-
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = 'bold 15px monospace';
-  ctx.fillText('UNTUK KEPERLUAN PEMBAYARAN:', 110, curY + 35);
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillText(`Pelunasan Sewa Unit ${receipt.unitName} (Tower ${receipt.tower})`, 110, curY + 70);
-
-  ctx.fillStyle = '#CBD5E1';
-  ctx.font = '15px sans-serif';
-  ctx.fillText(`Masa Sewa: ${receipt.tenureMonths} Bulan  ·  Termasuk PPN 11%, Bea Materai, & Security Deposit Jaminan`, 110, curY + 102);
-
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '14px monospace';
-  ctx.fillText(`Metode Pembayaran: ${receipt.paymentMethod || 'Bank Transfer Chobank (Escrow PT Baswara Mangkubumi Residence)'}`, 110, curY + 132);
-
-  // Official Note
-  curY = 1015;
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
-  ctx.fillRect(80, curY, 1040, 75);
-  ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
-  ctx.strokeRect(80, curY, 1040, 75);
-
-  ctx.fillStyle = '#34D399';
-  ctx.font = 'bold 13px monospace';
-  ctx.fillText('PENGESAHAN DOKUMEN:', 105, curY + 28);
-  ctx.fillStyle = '#CBD5E1';
+  // Row 1: Sewa Pokok
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(`Sewa Pokok Unit (${receipt.unitName}) - ${tenure} Bulan`, 100, y);
   ctx.font = '13px sans-serif';
-  ctx.fillText('Kuitansi ini merupakan bukti pembayaran sah dan final yang diterbitkan oleh PT Baswara Mangkubumi Residence.', 105, curY + 52);
+  ctx.fillStyle = '#64748B';
+  ctx.fillText(`Tarif Pokok Rp ${baseMonthly.toLocaleString('id-ID')}/bln × ${tenure} Bulan`, 100, y + 20);
+
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText(formatIdr(effectiveDiscountRate > 0 ? grossRent : totalRent), 920, y + 8);
+
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(80, y + 34);
+  ctx.lineTo(1120, y + 34);
+  ctx.stroke();
+
+  y += rowHeight + 10;
+
+  // Row 2: Diskon jika ada
+  if (effectiveDiscountRate > 0 && discountAmount > 0) {
+    const discountPercent = Math.round(effectiveDiscountRate * 100);
+    ctx.fillStyle = '#ECFDF5';
+    ctx.fillRect(80, y - 18, 1040, 46);
+    ctx.strokeStyle = '#A7F3D0';
+    ctx.strokeRect(80, y - 18, 1040, 46);
+
+    ctx.fillStyle = '#065F46';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(`✦ Diskon Komitmen Masa Sewa (${discountPercent}% · ${tenure} Bulan)`, 100, y + 10);
+    ctx.font = 'bold 17px monospace';
+    ctx.fillText(`- ${formatIdr(discountAmount)}`, 920, y + 10);
+
+    y += rowHeight;
+  }
+
+  // Row 3: PPN 11%
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('Pajak Pertambahan Nilai (PPN 11%)', 100, y);
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.fillText('11% dari total nilai sewa unit apartemen', 100, y + 20);
+
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText(formatIdr(ppn), 920, y + 8);
+
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.moveTo(80, y + 34);
+  ctx.lineTo(1120, y + 34);
+  ctx.stroke();
+
+  y += rowHeight + 10;
+
+  // Row 4: Bea Materai
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('Bea Materai & Administrasi Legalisasi Dokumen', 100, y);
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.fillText('Legalisasi perjanjian sewa resmi bermaterai lunas', 100, y + 20);
+
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText(formatIdr(materai), 920, y + 8);
+
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.moveTo(80, y + 34);
+  ctx.lineTo(1120, y + 34);
+  ctx.stroke();
+
+  y += rowHeight + 10;
+
+  // Row 5: Security Deposit
+  ctx.fillStyle = '#78350F';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('Security Deposit Jaminan (100% Refundable · 2 Bln Sewa Pokok)', 100, y);
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#92400E';
+  ctx.fillText('Jaminan pemeliharaan unit, dikembalikan penuh di akhir masa sewa', 100, y + 20);
+
+  ctx.font = 'bold 17px monospace';
+  ctx.fillStyle = '#855D00';
+  ctx.fillText(formatIdr(securityDeposit), 920, y + 8);
+
+  y += 50;
+
+  // Grand Total Box (Lunas)
+  const totalBoxY = y;
+  ctx.fillStyle = '#ECFDF5';
+  ctx.fillRect(80, totalBoxY, 1040, 80);
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(80, totalBoxY, 1040, 80);
+
+  ctx.fillStyle = '#065F46';
+  ctx.font = 'bold 18px monospace';
+  ctx.fillText('TOTAL TELAH DIBAYAR LUNAS:', 110, totalBoxY + 48);
+
+  ctx.fillStyle = '#059669';
+  ctx.font = 'bold 30px monospace';
+  ctx.fillText(formatIdr(totalUpfront), 780, totalBoxY + 50);
+
+  // Terbilang Text & Method
+  const legalBoxY = totalBoxY + 95;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(80, legalBoxY, 1040, 160);
+  ctx.strokeStyle = '#E2D9C8';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(80, legalBoxY, 1040, 160);
+
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('TERBILANG:', 105, legalBoxY + 28);
+
+  ctx.fillStyle = '#065F46';
+  ctx.font = 'italic bold 15px serif';
+  const terbilangStr = `# ${numberToIndonesianWords(totalUpfront)} #`;
+  ctx.fillText(terbilangStr, 105, legalBoxY + 54);
+
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('KETERANGAN & METODE TRANSAKSI:', 105, legalBoxY + 86);
+
+  ctx.fillStyle = '#334155';
+  ctx.font = '13px sans-serif';
+  ctx.fillText(`Metode Pembayaran : ${receipt.paymentMethod || 'Bank Transfer Chobank (Escrow PT Baswara Mangkubumi Residence)'}`, 105, legalBoxY + 110);
+  ctx.fillText('Catatan Pengesahan : Pembayaran telah diverifikasi secara sah. Dokumen kuitansi ini bersifat final.', 105, legalBoxY + 134);
+
+  // Prominent "LUNAS / FULLY PAID" Official Seal Stamp at bottom center
+  ctx.save();
+  ctx.translate(600, 1315);
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, 72, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#10B981';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath();
+  ctx.arc(0, 0, 62, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#047857';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('PT BASWARA MANGKUBUMI', 0, -34);
+  ctx.fillText('RESIDENCE', 0, -22);
+
+  ctx.fillStyle = '#065F46';
+  ctx.font = 'bold 24px serif';
+  ctx.fillText('LUNAS', 0, 8);
+
+  ctx.fillStyle = '#059669';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('★ FULLY PAID ★', 0, 26);
+  ctx.fillText('JAKARTA PUSAT', 0, 42);
+  ctx.restore();
 
   // Signatures
-  const sigY = 1370;
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '14px monospace';
+  const sigY = 1270;
+  ctx.fillStyle = '#64748B';
+  ctx.font = 'bold 13px monospace';
+  ctx.textAlign = 'left';
   ctx.fillText('MENGETAHUI & MENYETUJUI,', 100, sigY);
-  ctx.fillText('KEPALA DIVISI KEUANGAN,', 780, sigY);
+  ctx.fillText('DIVISI KEUANGAN & LEASING,', 780, sigY);
 
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = '#0F172A';
   ctx.font = 'bold 22px serif';
   ctx.fillText('Marcelinus Chitraditya Lokananta Prabaswara', 100, sigY + 50);
   ctx.fillText('Natasha Wijaya', 780, sigY + 50);
 
-  ctx.fillStyle = '#D4AF37';
-  ctx.font = '15px monospace';
-  ctx.fillText('Chief Executive Officer (CEO)', 100, sigY + 75);
-  ctx.fillText('Finance Controller & Head of Leasing', 780, sigY + 75);
+  ctx.fillStyle = '#855D00';
+  ctx.font = 'bold 14px monospace';
+  ctx.fillText('Chief Executive Officer (CEO)', 100, sigY + 76);
+  ctx.fillText('Finance Controller & Head of Leasing', 780, sigY + 76);
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.font = '13px sans-serif';
   ctx.fillText('PT Baswara Mangkubumi Residence', 100, sigY + 100);
   ctx.fillText('Official Finance & Treasury Department', 780, sigY + 100);
+
+  // Footer text
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('THE BASWARA SKY SUITES · PT BASWARA MANGKUBUMI RESIDENCE · OFFICIAL PAYMENT RECEIPT', 600, 1530);
 
   return canvas.toDataURL('image/jpeg', 0.95);
 }

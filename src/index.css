@@ -12,13 +12,26 @@
   --color-navy-light: #1E293B;
 }
 
+/* =========================================================================
+   WARM TRAVERTINE & ARCHITECTURAL LUXURY SANCTUARY
+   Atmospheric micro-grain texture, weightless elevation & refined hierarchy
+   ========================================================================= */
+
 html, body {
   height: 100%;
   min-height: 100%;
   overflow-x: hidden;
   font-family: var(--font-sans);
-  background-color: #0B0F19;
-  color: #E5E7EB;
+  background-color: #FBF9F5;
+  color: #1E293B;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% 0%, rgba(245, 235, 215, 0.55) 0%, transparent 75%),
+    radial-gradient(circle 800px at 100% 15%, rgba(212, 175, 55, 0.06) 0%, transparent 70%),
+    radial-gradient(circle 600px at 0% 85%, rgba(133, 93, 0, 0.04) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.028'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  background-attachment: fixed;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
 #root {
@@ -31,6 +44,7 @@ html, body {
 
 h1, h2, h3, h4, .font-serif {
   font-family: var(--font-serif);
+  letter-spacing: -0.01em;
 }
 
 /* Custom scrollbars */
@@ -39,12 +53,182 @@ h1, h2, h3, h4, .font-serif {
   height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B0F19;
+  background: #FBF9F5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #D8D2C4;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #D4AF37;
+  background: #855D00;
 }
+
+/* Light Mode Overrides: Canvas Backgrounds */
+html.light,
+html.theme-light {
+  background-color: #FBF9F5;
+  color: #1E293B;
+}
+
+html.light body {
+  background-color: #FBF9F5 !important;
+  color: #1E293B !important;
+}
+
+html.light .bg-\[\#0B0F19\] {
+  background-color: #FBF9F5 !important;
+}
+html.light .bg-\[\#0B0F19\]\/95 {
+  background-color: rgba(251, 249, 245, 0.96) !important;
+  backdrop-filter: blur(12px);
+}
+html.light .bg-\[\#0B0F19\]\/90 {
+  background-color: rgba(251, 249, 245, 0.92) !important;
+  backdrop-filter: blur(10px);
+}
+html.light .bg-\[\#0B0F19\]\/80 {
+  background-color: rgba(251, 249, 245, 0.88) !important;
+  backdrop-filter: blur(8px);
+}
+html.light .bg-\[\#0B0F19\]\/60 {
+  background-color: rgba(251, 249, 245, 0.75) !important;
+}
+html.light .bg-\[\#0B0F19\]\/50 {
+  background-color: rgba(251, 249, 245, 0.65) !important;
+}
+
+/* Elevated Cards in Light Mode: Pure milk white with 'weightless' multi-tier defined floating shadows */
+html.light .bg-\[\#111827\],
+html.light .bg-\[\#111827\]\/90,
+html.light .bg-\[\#111827\]\/95 {
+  background-color: #FFFFFF !important;
+  border-color: #ECE5D8 !important;
+  box-shadow: 
+    0 1px 3px 0 rgba(15, 23, 42, 0.02),
+    0 6px 20px -3px rgba(133, 93, 0, 0.05),
+    0 18px 40px -6px rgba(15, 23, 42, 0.05) !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+html.light .bg-\[\#111827\]\/80 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+html.light .bg-\[\#111827\]\/60 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Modals & Sub-surfaces in Light Mode */
+html.light .bg-\[\#0D111A\] {
+  background-color: #FFFFFF !important;
+  border-color: #E2D9C8 !important;
+  box-shadow: 
+    0 2px 4px 0 rgba(15, 23, 42, 0.02),
+    0 16px 36px -4px rgba(133, 93, 0, 0.06),
+    0 32px 72px -12px rgba(15, 23, 42, 0.16) !important;
+}
+html.light .bg-\[\#080C14\] {
+  background-color: #F8F5EE !important;
+  border-color: #EAE3D5 !important;
+}
+
+/* High-Contrast Typographic Hierarchy */
+html.light .text-\[\#F3E5AB\] {
+  color: #0F172A !important; /* Deep obsidian charcoal for headings */
+}
+html.light .text-\[\#D4AF37\] {
+  color: #855D00 !important; /* Rich antique gold/bronze with strong contrast */
+}
+html.light .text-slate-100,
+html.light .text-slate-200 {
+  color: #0F172A !important;
+}
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+html.light .text-slate-400 {
+  color: #4B5563 !important;
+}
+html.light .text-slate-500 {
+  color: #64748B !important;
+}
+
+/* Ensure buttons with solid dark/gold backgrounds maintain crisp white text */
+html.light .bg-\[\#D4AF37\],
+html.light .bg-\[\#9A7B1C\],
+html.light .bg-\[\#855D00\],
+html.light .bg-\[\#0F172A\],
+html.light .bg-slate-900,
+html.light .bg-slate-800,
+html.light .bg-emerald-600,
+html.light .bg-emerald-700,
+html.light .bg-blue-600,
+html.light .bg-\[\#1D9BF0\] {
+  color: #FFFFFF !important;
+}
+html.light .bg-\[\#D4AF37\] *,
+html.light .bg-\[\#9A7B1C\] *,
+html.light .bg-\[\#855D00\] *,
+html.light .bg-\[\#0F172A\] *,
+html.light .bg-slate-900 *,
+html.light .bg-slate-800 *,
+html.light .bg-emerald-600 *,
+html.light .bg-emerald-700 *,
+html.light .bg-\[\#1D9BF0\] * {
+  color: #FFFFFF;
+}
+
+/* Borders in Light Mode */
+html.light .border-slate-800 {
+  border-color: #E6DFD2 !important;
+}
+html.light .border-slate-800\/80,
+html.light .border-slate-800\/60 {
+  border-color: #EFE9DE !important;
+}
+html.light .border-slate-700 {
+  border-color: #D8D0C3 !important;
+}
+html.light .border-\[\#D4AF37\]\/20,
+html.light .border-\[\#D4AF37\]\/30,
+html.light .border-\[\#D4AF37\]\/35,
+html.light .border-\[\#D4AF37\]\/40 {
+  border-color: rgba(133, 93, 0, 0.28) !important;
+}
+html.light .border-\[\#D4AF37\] {
+  border-color: #855D00 !important;
+}
+
+/* Hero section scrim adjustment in Light Mode */
+html.light .from-\[\#0B0F19\] {
+  --tw-gradient-from: #FBF9F5 var(--tw-gradient-from-position) !important;
+}
+html.light .via-\[\#0B0F19\]\/75 {
+  --tw-gradient-via: rgba(251, 249, 245, 0.85) var(--tw-gradient-via-position) !important;
+}
+html.light .to-\[\#0B0F19\]\/40 {
+  --tw-gradient-to: rgba(251, 249, 245, 0.35) var(--tw-gradient-to-position) !important;
+}
+
+/* Accent buttons and badges in Light Mode */
+html.light .bg-\[\#D4AF37\] {
+  background: linear-gradient(135deg, #9A7B1C 0%, #855D00 100%) !important;
+  color: #FFFFFF !important;
+}
+html.light .bg-\[\#D4AF37\]\/10,
+html.light .bg-\[\#D4AF37\]\/15 {
+  background-color: rgba(133, 93, 0, 0.08) !important;
+}
+html.light .bg-\[\#D4AF37\]\/20 {
+  background-color: rgba(133, 93, 0, 0.14) !important;
+}
+html.light .hover\:bg-\[\#F3E5AB\]:hover {
+  background: linear-gradient(135deg, #855D00 0%, #704D00 100%) !important;
+  color: #FFFFFF !important;
+}
+
+/* Selection */
+html.light ::selection {
+  background-color: rgba(133, 93, 0, 0.22);
+  color: #0F172A;
+}
+

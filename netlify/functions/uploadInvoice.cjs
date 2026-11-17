@@ -202,16 +202,33 @@ exports.handler = async (event, context) => {
     }
 
     const buffer = Buffer.from(cleanBase64, 'base64');
-    const mediaStream = Readable.from(buffer);
+    const safeFileName = fileName || `Invoice-${Date.now()}.jpg`;
+
+    // 1. Prepare local web archive fallback
+    let directWebUrl = null;
+    try {
+      const publicInvoicesDir = path.resolve(process.cwd(), 'public', 'invoices');
+      if (!fs.existsSync(publicInvoicesDir)) {
+        fs.mkdirSync(publicInvoicesDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(publicInvoicesDir, safeFileName), buffer);
+      const reqHost = (event.headers && (event.headers['x-forwarded-host'] || event.headers.host)) || 'localhost:3000';
+      const reqProto = (event.headers && event.headers['x-forwarded-proto']) || (reqHost.includes('localhost') ? 'http' : 'https');
+      const baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || process.env.APP_URL || `${reqProto}://${reqHost}`;
+      directWebUrl = `${baseUrl.replace(/\/$/, '')}/invoices/${safeFileName}`;
+    } catch (saveErr) {
+      console.info('Local disk archive notice:', saveErr.message);
+    }
 
     let targetFolderId = customFolderId && customFolderId.trim() !== '' ? customFolderId.trim() : null;
     let targetFolderLink = targetFolderId ? `https://drive.google.com/drive/folders/${targetFolderId}` : null;
 
     let response;
     try {
+      const mediaStream = Readable.from(buffer);
       response = await drive.files.create({
         requestBody: {
-          name: fileName || `Invoice-${Date.now()}.jpg`,
+          name: safeFileName,
           parents: targetFolderId ? [targetFolderId] : undefined,
           mimeType: mimeType || 'image/jpeg',
         },
@@ -223,20 +240,66 @@ exports.handler = async (event, context) => {
         supportsAllDrives: true,
       });
     } catch (parentErr) {
+      const isQuotaNotice = parentErr.message && (
+        parentErr.message.includes('storage quota') ||
+        parentErr.message.includes('Service Accounts do not have storage quota')
+      );
+
+      if (isQuotaNotice) {
+        console.info(`[Storage Notice] Service Account has 0GB Drive quota on personal Drive. File archived to web storage: ${directWebUrl || safeFileName}`);
+        if (directWebUrl) {
+          return {
+            statusCode: 200,
+            headers: CORS_HEADERS,
+            body: JSON.stringify({
+              success: true,
+              fileId: safeFileName,
+              link: directWebUrl,
+              webViewLink: directWebUrl,
+              folderId: targetFolderId,
+              folderLink: targetFolderLink,
+              isLocalArchive: true,
+            }),
+          };
+        }
+      }
+
       if (targetFolderId && (parentErr.code === 404 || parentErr.message?.includes('File not found') || parentErr.message?.includes('parent'))) {
-        const fallbackStream = Readable.from(buffer);
-        response = await drive.files.create({
-          requestBody: {
-            name: fileName || `Invoice-${Date.now()}.jpg`,
-            mimeType: mimeType || 'image/jpeg',
-          },
-          media: {
-            mimeType: mimeType || 'image/jpeg',
-            body: fallbackStream,
-          },
-          fields: 'id, name, webViewLink, webContentLink',
-          supportsAllDrives: true,
-        });
+        try {
+          const fallbackStream = Readable.from(buffer);
+          response = await drive.files.create({
+            requestBody: {
+              name: safeFileName,
+              mimeType: mimeType || 'image/jpeg',
+            },
+            media: {
+              mimeType: mimeType || 'image/jpeg',
+              body: fallbackStream,
+            },
+            fields: 'id, name, webViewLink, webContentLink',
+            supportsAllDrives: true,
+          });
+        } catch (rootErr) {
+          if (rootErr.message && (rootErr.message.includes('storage quota') || rootErr.message.includes('Service Accounts do not have storage quota'))) {
+            console.info(`[Storage Notice] Service Account has 0GB Drive quota on personal Drive. File archived to web storage: ${directWebUrl || safeFileName}`);
+            if (directWebUrl) {
+              return {
+                statusCode: 200,
+                headers: CORS_HEADERS,
+                body: JSON.stringify({
+                  success: true,
+                  fileId: safeFileName,
+                  link: directWebUrl,
+                  webViewLink: directWebUrl,
+                  folderId: targetFolderId,
+                  folderLink: targetFolderLink,
+                  isLocalArchive: true,
+                }),
+              };
+            }
+          }
+          throw rootErr;
+        }
       } else {
         throw parentErr;
       }

@@ -68,7 +68,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-full min-h-screen h-[100dvh] w-full overflow-hidden bg-[#0B0F19] text-[#E5E7EB] font-sans selection:bg-[#D4AF37]/30 selection:text-[#F3E5AB] flex flex-col relative">
+    <div className="h-full min-h-screen h-[100dvh] w-full overflow-hidden bg-[#FBF9F5] text-[#1E293B] font-sans selection:bg-[#9A7B1C]/20 selection:text-[#855D00] flex flex-col relative">
       
       {/* Top Bar Navigation with page selection */}
       <Navbar

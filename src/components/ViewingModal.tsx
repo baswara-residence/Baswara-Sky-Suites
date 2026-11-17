@@ -35,6 +35,7 @@ import {
 import {
   formatOfficialInvoiceNumber,
   formatOfficialReceiptNumber,
+  numberToIndonesianWords,
   getNextInvoiceSequence,
   fetchLiveInvoiceSequence,
   OFFICIAL_BANK_INFO,
@@ -56,6 +57,7 @@ import {
   generateInvoiceJpegDataUrl,
   generateReceiptJpegDataUrl,
   downloadQuoteDataJpg,
+  downloadReceiptJpg,
   ReceiptData,
 } from '../lib/googleDriveInvoice';
 import { User, onAuthStateChanged } from 'firebase/auth';
@@ -339,6 +341,7 @@ export const ViewingModal: React.FC<ViewingModalProps> = ({
         tenureMonths: targetInvoice.tenureMonths,
         totalAmount: targetInvoice.initialTotalUpfront,
         paymentMethod: `Bank Transfer - ${OFFICIAL_BANK_INFO.bankName} (PT Baswara Mangkubumi Residence)`,
+        invoice: targetInvoice,
       };
       const directReceiptBase64 = generateReceiptJpegDataUrl(
         receiptData,
@@ -660,6 +663,30 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
     const inv = generatedInvoice || attachedQuote;
     if (inv) {
       downloadQuoteDataJpg(inv, fullName.trim() || 'Tenant', normalizedUsername || '@tenant');
+    }
+  };
+
+  const handleDownloadReceiptJpg = () => {
+    const inv = generatedInvoice || attachedQuote;
+    if (inv) {
+      const todayFormatted = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+      const receiptNo = formatOfficialReceiptNumber(inv.invoiceNumber);
+      const receiptData: ReceiptData = {
+        receiptNumber: receiptNo,
+        invoiceNumber: inv.invoiceNumber,
+        paymentDate: todayFormatted,
+        unitName: currentUnit.name,
+        tower: currentUnit.tower,
+        tenureMonths: inv.tenureMonths,
+        totalAmount: inv.initialTotalUpfront,
+        paymentMethod: `Bank Transfer - ${OFFICIAL_BANK_INFO.bankName} (PT Baswara Mangkubumi Residence)`,
+        invoice: inv,
+      };
+      downloadReceiptJpg(receiptData, fullName.trim() || 'Tenant', normalizedUsername || '@tenant');
     }
   };
 
@@ -1107,26 +1134,26 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
             <div className="space-y-6 py-2">
               {/* Header Status */}
               <div className="text-center space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono tracking-widest uppercase">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <div className="inline-flex items-center gap-2 px-3 py-1 text-xs font-mono tracking-widest uppercase border bg-amber-500/10 border-amber-500/30 text-amber-800">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                   <span>Invoice Resmi Diterbitkan · Status: Belum Dibayar</span>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-serif text-[#F3E5AB]">
+                <h3 className="text-2xl sm:text-3xl font-serif text-[#0F172A] font-bold">
                   Permohonan Sewa Berhasil Didaftarkan
                 </h3>
-                <p className="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-                  Terima kasih, <strong className="text-white font-medium">{fullName}</strong>. Dokumen invoice resmi untuk unit <strong className="text-[#F3E5AB]">{currentUnit.name} (Tower {currentUnit.tower})</strong> telah diterbitkan.
+                <p className="text-slate-600 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
+                  Terima kasih, <strong className="text-slate-900 font-bold">{fullName}</strong>. Dokumen invoice resmi untuk unit <strong className="text-[#855D00] font-bold">{currentUnit.name} (Tower {currentUnit.tower})</strong> telah diterbitkan oleh PT Baswara Mangkubumi Residence.
                 </p>
 
                 {/* Important Base Confirmation Notice Before Payment */}
-                <div className="p-4 bg-amber-500/10 border-2 border-amber-500/40 text-amber-200 text-xs text-left max-w-xl mx-auto space-y-1.5 shadow-lg">
-                  <div className="flex items-center gap-2 text-amber-300 font-bold uppercase tracking-wider text-[11px] font-mono">
-                    <AlertCircle size={15} className="text-amber-400 shrink-0" />
+                <div className="p-4 bg-amber-50 border-2 border-amber-400 text-amber-900 text-xs text-left max-w-xl mx-auto space-y-1.5 shadow-sm">
+                  <div className="flex items-center gap-2 text-amber-800 font-bold uppercase tracking-wider text-[11px] font-mono">
+                    <AlertCircle size={15} className="text-amber-600 shrink-0" />
                     <span>PENTING: Konfirmasi Ketersediaan Unit Sebelum Transfer</span>
                   </div>
-                  <p className="text-slate-200 text-xs leading-relaxed">
-                    Sebelum melakukan transfer pembayaran, <strong>mohon konfirmasi terlebih dahulu ke akun base resmi (<a href="https://x.com/the_BASWARA" target="_blank" rel="noopener noreferrer" className="text-[#F3E5AB] underline font-mono hover:text-white">@the_BASWARA</a>)</strong> untuk memastikan apakah unit yang Anda pilih masih <em>available</em> (tersedia) atau tidak.
+                  <p className="text-slate-700 text-xs leading-relaxed">
+                    Sebelum melakukan transfer pembayaran, <strong>mohon konfirmasi terlebih dahulu ke akun base resmi (<a href="https://x.com/the_BASWARA" target="_blank" rel="noopener noreferrer" className="text-[#855D00] underline font-mono hover:text-[#704D00]">@the_BASWARA</a>)</strong> untuk memastikan apakah unit yang Anda pilih masih <em>available</em> (tersedia) atau tidak.
                   </p>
                 </div>
               </div>
@@ -1135,18 +1162,21 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
               {(() => {
                 const inv = generatedInvoice || attachedQuote;
                 if (!inv) return null;
-                const invNo = inv.invoiceNumber;
-                const tweetText = `Halo @the_BASWARA, saya telah melakukan pembayaran sewa unit ${currentUnit.name} (Tower ${currentUnit.tower}) dengan nomor invoice ${invNo}. Berikut bukti transfernya, mohon diproses untuk serah terima kunci. Terima kasih! #BaswaraSkySuites`;
-                const twitterIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+
+                const baseMo = inv.baseMonthly || (inv.unit?.pricePerMonth ?? Math.round(inv.discountedMonthly / (1 - (inv.discountRate || 0))));
+                const gross = baseMo * inv.tenureMonths;
+                const effectiveRate = inv.discountRate || (inv.tenureMonths === 12 ? 0.10 : inv.tenureMonths === 6 ? 0.05 : 0);
+                const discountVal = effectiveRate > 0 ? Math.round(gross * effectiveRate) : 0;
+                const discountPct = Math.round(effectiveRate * 100);
 
                 return (
                   <>
-                    {/* Primary Action Buttons */}
+                    {/* Primary Action Buttons for Customer: Invoice JPG & Bank Info */}
                     <div className="flex flex-wrap items-center justify-center gap-3 max-w-xl mx-auto">
                       <button
                         type="button"
                         onClick={handleDownloadInvoiceJpg}
-                        className="flex-1 min-w-[200px] py-3 px-5 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-[#0B0F19] font-bold text-xs uppercase tracking-wider hover:opacity-95 transition-all shadow-lg shadow-[#D4AF37]/20 flex items-center justify-center gap-2 cursor-pointer"
+                        className="flex-1 min-w-[220px] py-3.5 px-6 bg-gradient-to-r from-[#9A7B1C] to-[#855D00] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Download size={16} />
                         <span>Unduh File JPG Invoice</span>
@@ -1155,48 +1185,50 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                       <button
                         type="button"
                         onClick={handleCopyBank}
-                        className="py-3 px-4 border border-[#D4AF37]/60 text-[#F3E5AB] hover:bg-[#D4AF37]/10 text-xs uppercase tracking-wider font-mono transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        className="py-3.5 px-6 border-2 border-[#855D00] text-[#855D00] hover:bg-[#855D00] hover:text-white bg-white text-xs uppercase tracking-wider font-mono font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                       >
-                        {copiedBank ? <Check size={15} className="text-emerald-400" /> : <Copy size={15} />}
+                        {copiedBank ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
                         <span>{copiedBank ? 'Rekening Tersalin!' : 'Salin Rekening Bank'}</span>
                       </button>
                     </div>
 
-                    {/* Official Invoice Card */}
+                    {/* =========================================================================
+                        OFFICIAL INVOICE PREVIEW (Realistic Warm Parchment Paper #FCFBF9)
+                        ========================================================================= */}
                     <div
-                      id="official-invoice-card"
-                      className="p-6 sm:p-8 bg-[#0B0F19] border-2 border-[#D4AF37] shadow-2xl text-left max-w-3xl mx-auto space-y-6 relative overflow-hidden"
+                      id="official-document-card"
+                      className="p-6 sm:p-8 bg-[#FCFBF9] border-2 border-[#855D00] shadow-2xl text-left max-w-3xl mx-auto space-y-6 relative overflow-hidden text-slate-800"
                     >
-                      {/* Watermark / Background Glow */}
-                      <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />
+                      {/* Decorative inner frame */}
+                      <div className="absolute inset-1.5 border border-[#D4AF37]/50 pointer-events-none" />
 
                       {/* Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-4 border-b border-[#D4AF37]/40">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-4 border-b border-[#E2D9C8]">
                         <div>
-                          <div className="text-[10px] font-mono tracking-widest text-[#D4AF37] uppercase">
-                            Official Tenancy Billing
+                          <div className="text-[10px] font-mono tracking-widest uppercase font-bold text-[#855D00]">
+                            PT BASWARA MANGKUBUMI RESIDENCE · OFFICIAL TENANCY BILLING
                           </div>
-                          <h2 className="text-xl sm:text-2xl font-serif text-[#F3E5AB]">
+                          <h2 className="text-xl sm:text-2xl font-serif text-[#0F172A] font-bold">
                             THE BASWARA SKY SUITES
                           </h2>
-                          <p className="text-slate-400 text-[11px] mt-0.5">
-                            PT Baswara Mangkubumi Residence · Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat
+                          <p className="text-slate-600 text-[11px] mt-0.5">
+                            Jl. Boulevard Kusuma Menteng No. 8, Jakarta Pusat 10310
                           </p>
                         </div>
 
                         <div className="text-left sm:text-right space-y-1">
-                          <div className="text-xs font-mono font-bold text-[#D4AF37]">
+                          <div className="text-xs font-mono font-bold text-[#855D00]">
                             NO: {inv.invoiceNumber}
                           </div>
-                          <div className="text-[11px] text-slate-300">
+                          <div className="text-[11px] text-slate-600">
                             Tanggal Terbit: {inv.issueDate}
                           </div>
-                          <div className="text-[11px] text-amber-400">
+                          <div className="text-[11px] text-amber-700 font-bold">
                             Jatuh Tempo: {inv.dueDate} (7 Hari)
                           </div>
                           <div className="pt-1">
-                            <span className="inline-block px-2.5 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 font-mono text-[10px] font-bold tracking-wider">
-                              BELUM DIBAYAR (PENDING)
+                            <span className="inline-block px-2.5 py-0.5 font-mono text-[10px] font-bold tracking-wider bg-amber-100 border border-amber-400 text-amber-900">
+                              STATUS: BELUM DIBAYAR
                             </span>
                           </div>
                         </div>
@@ -1204,134 +1236,155 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
 
                       {/* Tenant & Unit Info Grid */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                        <div className="p-3 bg-[#080C14] border border-slate-800 space-y-1">
-                          <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37]">
+                        <div className="p-3 bg-white border border-[#E2D9C8] space-y-1 shadow-sm">
+                          <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#855D00]">
                             Ditagihkan Kepada:
                           </div>
-                          <div className="font-serif text-white font-medium text-sm">
+                          <div className="font-serif text-[#0F172A] font-bold text-sm">
                             {fullName}
                           </div>
-                          <div className="font-mono text-[#D4AF37] text-xs">
+                          <div className="font-mono text-xs font-bold text-[#855D00]">
                             {normalizedUsername}
                           </div>
                           {faceClaim && (
-                            <div className="text-slate-400 text-[11px]">
+                            <div className="text-slate-600 text-[11px]">
                               Face Claim: {faceClaim}
                             </div>
                           )}
                         </div>
 
-                        <div className="p-3 bg-[#080C14] border border-slate-800 space-y-1">
-                          <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37]">
+                        <div className="p-3 bg-white border border-[#E2D9C8] space-y-1 shadow-sm">
+                          <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#855D00]">
                             Spesifikasi Unit & Hunian:
                           </div>
-                          <div className="font-serif text-white font-medium text-sm">
+                          <div className="font-serif text-[#0F172A] font-bold text-sm">
                             {currentUnit.name} · Tower {currentUnit.tower}
                           </div>
-                          <div className="text-slate-300 text-[11px]">
-                            Masa Sewa: <strong className="text-white">{inv.tenureMonths} Bulan</strong> · Luas: {currentUnit.sizeM2} m²
+                          <div className="text-slate-700 text-[11px]">
+                            Masa Sewa: <strong className="text-slate-900 font-bold">{inv.tenureMonths} Bulan</strong> · Luas: {currentUnit.sizeM2} m²
                           </div>
-                          <div className="text-slate-400 text-[11px]">
+                          <div className="text-slate-600 text-[11px]">
                             Status: {isLivingAlone ? 'Tinggal Sendiri' : `Bersama ${coTenants.length} Penyewa Tambahan`}
                           </div>
                         </div>
                       </div>
 
                       {/* Cost Breakdown Table */}
-                      <div className="border border-slate-800 overflow-hidden text-xs">
-                        <div className="bg-[#111827] px-4 py-2.5 font-mono text-[11px] text-[#D4AF37] flex justify-between uppercase tracking-wider border-b border-slate-800">
-                          <span>Deskripsi Tagihan</span>
+                      <div className="border border-[#E2D9C8] overflow-hidden text-xs bg-white shadow-sm">
+                        <div className="px-4 py-2.5 font-mono text-[11px] text-white flex justify-between uppercase tracking-wider bg-[#0F172A]">
+                          <span>Deskripsi Rincian Tagihan</span>
                           <span>Total (IDR)</span>
                         </div>
-                        <div className="divide-y divide-slate-800/80 bg-[#080C14]">
-                          {(() => {
-                            const baseMo = inv.baseMonthly || (inv.unit?.pricePerMonth ?? Math.round(inv.discountedMonthly / (1 - (inv.discountRate || 0))));
-                            const gross = baseMo * inv.tenureMonths;
-                            const effectiveRate = inv.discountRate || (inv.tenureMonths === 12 ? 0.10 : inv.tenureMonths === 6 ? 0.05 : 0);
-                            const discountVal = effectiveRate > 0 ? Math.round(gross * effectiveRate) : 0;
-                            const discountPct = Math.round(effectiveRate * 100);
+                        <div className="divide-y divide-slate-200">
+                          <div className="px-4 py-2.5 flex justify-between text-slate-800">
+                            <span>Sewa Pokok Unit ({inv.tenureMonths} Bulan)</span>
+                            <span className="font-mono font-bold text-slate-900">
+                              Rp {(effectiveRate > 0 ? gross : (inv.totalRentForTenure || (inv.discountedMonthly * inv.tenureMonths))).toLocaleString('id-ID')}
+                            </span>
+                          </div>
 
-                            return (
-                              <>
-                                <div className="px-4 py-2.5 flex justify-between text-slate-200">
-                                  <span>Sewa Pokok Unit ({inv.tenureMonths} Bulan)</span>
-                                  <span className="font-mono font-medium text-white">
-                                    Rp {(effectiveRate > 0 ? gross : (inv.totalRentForTenure || (inv.discountedMonthly * inv.tenureMonths))).toLocaleString('id-ID')}
-                                  </span>
-                                </div>
+                          {effectiveRate > 0 && discountVal > 0 && (
+                            <div className="px-4 py-2.5 flex justify-between bg-emerald-50 border-y border-emerald-300 text-emerald-900">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-emerald-800">
+                                  ✦ Diskon Komitmen Masa Sewa ({discountPct}% · {inv.tenureMonths} Bulan)
+                                </span>
+                                <span className="text-[10px] text-emerald-700">
+                                  Potongan sewa langsung Rp {(baseMo - inv.discountedMonthly).toLocaleString('id-ID')}/bln
+                                </span>
+                              </div>
+                              <span className="font-mono font-bold text-emerald-800 self-center">
+                                - Rp {discountVal.toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                          )}
 
-                                {effectiveRate > 0 && discountVal > 0 && (
-                                  <div className="px-4 py-2.5 flex justify-between bg-emerald-950/25 border-y border-emerald-500/30 text-emerald-300">
-                                    <div className="flex flex-col">
-                                      <span className="font-medium text-emerald-200">
-                                        ✦ Diskon Komitmen Masa Sewa ({discountPct}% · {inv.tenureMonths} Bulan)
-                                      </span>
-                                      <span className="text-[10px] text-emerald-400/80">
-                                        Potongan sewa langsung Rp {(baseMo - inv.discountedMonthly).toLocaleString('id-ID')}/bln
-                                      </span>
-                                    </div>
-                                    <span className="font-mono font-bold text-emerald-300 self-center">
-                                      - Rp {discountVal.toLocaleString('id-ID')}
-                                    </span>
-                                  </div>
-                                )}
-                              </>
-                            );
-                          })()}
-
-                          <div className="px-4 py-2 flex justify-between text-slate-300">
+                          <div className="px-4 py-2 flex justify-between text-slate-700">
                             <span>Pajak Pertambahan Nilai (PPN 11%)</span>
-                            <span className="font-mono text-slate-200">
+                            <span className="font-mono text-slate-900 font-bold">
                               Rp {(inv.ppnAmount || Math.round((inv.totalRentForTenure || 0) * 0.11)).toLocaleString('id-ID')}
                             </span>
                           </div>
-                          <div className="px-4 py-2 flex justify-between text-slate-300">
+                          <div className="px-4 py-2 flex justify-between text-slate-700">
                             <span>Bea Materai & Administrasi Legalisasi Dokumen</span>
-                            <span className="font-mono text-slate-200">
+                            <span className="font-mono text-slate-900 font-bold">
                               Rp {(inv.materaiFee || 10000).toLocaleString('id-ID')}
                             </span>
                           </div>
-                          <div className="px-4 py-2 flex justify-between text-slate-300">
+                          <div className="px-4 py-2 flex justify-between text-slate-700">
                             <span>Security Deposit Jaminan (100% Refundable · 2 Bln Sewa Pokok)</span>
-                            <span className="font-mono text-slate-200">
+                            <span className="font-mono text-[#855D00] font-bold">
                               Rp {inv.securityDeposit.toLocaleString('id-ID')}
                             </span>
                           </div>
                         </div>
 
                         {/* Grand Total */}
-                        <div className="px-4 py-3.5 bg-[#D4AF37]/15 border-t-2 border-[#D4AF37] flex items-center justify-between">
-                          <span className="font-mono text-xs font-bold text-[#F3E5AB] uppercase tracking-wider">
+                        <div className="px-4 py-3.5 border-t-2 flex items-center justify-between bg-[#F8F5EE] border-[#855D00]">
+                          <span className="font-mono text-xs font-bold text-[#0F172A] uppercase tracking-wider">
                             Total Tagihan Pembayaran:
                           </span>
-                          <span className="font-mono text-lg sm:text-xl font-bold text-[#D4AF37]">
+                          <span className="font-mono text-lg sm:text-xl font-bold text-[#855D00]">
                             Rp {inv.initialTotalUpfront.toLocaleString('id-ID')}
                           </span>
                         </div>
                       </div>
 
-                      {/* Official Legal Terms (Tanpa petunjuk transfer di dalam dokumen) */}
-                      <div className="p-4 bg-[#080C14] border border-slate-800 space-y-1.5 text-xs">
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-[#D4AF37]">
-                          Ketentuan Resmi Penagihan & Legalitas Dokumen:
+                      {/* Terbilang block */}
+                      <div className="p-3 bg-white border border-[#E2D9C8] space-y-1 text-xs shadow-sm">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-[#855D00] font-bold">
+                          Terbilang:
                         </div>
-                        <div className="text-slate-300 text-[11px] leading-relaxed space-y-1 pt-0.5">
-                          <p>1. Dokumen invoice ini merupakan bukti penagihan resmi yang sah, diterbitkan oleh PT Baswara Mangkubumi Residence.</p>
-                          <p>2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.</p>
-                          <p>3. Serah terima unit hunian dan akses kartu resmi diproses setelah verifikasi leasing dikonfirmasi.</p>
+                        <div className="font-serif italic font-bold text-slate-900 text-xs">
+                          # {numberToIndonesianWords(inv.initialTotalUpfront)} #
                         </div>
                       </div>
 
-                      {/* Signatures */}
-                      <div className="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row justify-between gap-4 text-[11px]">
+                      {/* Official Bank Account Info */}
+                      <div className="p-4 bg-[#F8F5EE] border border-[#855D00]/45 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs shadow-sm">
                         <div className="space-y-1">
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-[#855D00] font-bold">
+                            Rekening Pembayaran Resmi (Transfer Bank):
+                          </div>
+                          <div className="text-slate-800 font-medium">
+                            Bank <strong className="text-[#0F172A]">{OFFICIAL_BANK_INFO.bankName}</strong> · a/n <strong className="text-[#0F172A]">{OFFICIAL_BANK_INFO.accountHolder}</strong>
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            Cantumkan nomor invoice <span className="font-mono font-bold text-slate-700">{inv.invoiceNumber}</span> pada berita transfer
+                          </div>
+                        </div>
+                        <div className="sm:text-right border-t sm:border-t-0 sm:border-l border-[#E2D9C8] pt-2 sm:pt-0 sm:pl-4">
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                            Nomor Rekening Resmi:
+                          </div>
+                          <div className="font-mono text-base sm:text-lg font-bold text-[#0F172A] tracking-wider mt-0.5">
+                            {OFFICIAL_BANK_INFO.accountNumber}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Official Legal Terms */}
+                      <div className="p-4 bg-white border border-[#E2D9C8] space-y-1.5 text-xs shadow-sm">
+                        <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#855D00]">
+                          Ketentuan Resmi Penagihan & Legalitas Dokumen:
+                        </div>
+                        <div className="text-slate-700 text-[11px] leading-relaxed space-y-1 pt-0.5">
+                          <p>1. Dokumen invoice ini merupakan bukti penagihan resmi yang sah, diterbitkan oleh PT Baswara Mangkubumi Residence.</p>
+                          <p>2. Security Deposit (Dana Jaminan Pemeliharaan) bersifat 100% dapat dikembalikan (refundable) pada akhir masa sewa.</p>
+                          <p>3. Serah terima unit hunian dan kartu akses resmi diproses setelah verifikasi leasing dikonfirmasi.</p>
+                        </div>
+                      </div>
+
+                      {/* Signatures & Seal Stamp */}
+                      <div className="pt-2 border-t border-[#E2D9C8] flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px]">
+                        <div className="space-y-1 w-full sm:w-auto">
                           <div className="text-slate-500 font-mono text-[10px] uppercase">
                             Mengetahui & Menyetujui,
                           </div>
-                          <div className="font-serif text-white font-medium text-xs pt-1">
+                          <div className="font-serif text-[#0F172A] font-bold text-xs pt-1">
                             Marcelinus Chitraditya Lokananta Prabaswara
                           </div>
-                          <div className="text-[#D4AF37] font-mono text-[10px]">
+                          <div className="text-[#855D00] font-mono text-[10px] font-bold">
                             Chief Executive Officer (CEO)
                           </div>
                           <div className="text-slate-500 text-[10px]">
@@ -1339,14 +1392,24 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                           </div>
                         </div>
 
-                        <div className="space-y-1 sm:text-right">
-                          <div className="text-slate-500 font-mono text-[10px] uppercase">
-                            Otorisasi Leasing & Keuangan,
+                        {/* Center Seal Stamp */}
+                        <div className="py-2">
+                          <div className="w-24 h-24 rounded-full border-2 border-[#855D00]/50 border-dashed flex flex-col items-center justify-center text-center p-1.5 text-[#855D00]">
+                            <span className="text-[7px] font-mono uppercase font-bold tracking-tight">PT BASWARA</span>
+                            <span className="text-[10px] font-serif font-bold text-[#0F172A]">OFFICIAL</span>
+                            <span className="text-[7px] font-mono uppercase font-bold">BILLING</span>
+                            <span className="text-[6px] font-mono text-amber-700">JAKARTA PUSAT</span>
                           </div>
-                          <div className="font-serif text-white font-medium text-xs pt-1">
+                        </div>
+
+                        <div className="space-y-1 w-full sm:w-auto sm:text-right">
+                          <div className="text-slate-500 font-mono text-[10px] uppercase">
+                            Otorisasi Keuangan & Leasing,
+                          </div>
+                          <div className="font-serif text-[#0F172A] font-bold text-xs pt-1">
                             Natasha Wijaya
                           </div>
-                          <div className="text-[#D4AF37] font-mono text-[10px]">
+                          <div className="text-[#855D00] font-mono text-[10px] font-bold">
                             Head of Leasing & Compliance
                           </div>
                           <div className="text-slate-500 text-[10px]">
@@ -1356,93 +1419,60 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                       </div>
                     </div>
 
-                    {/* Step-by-Step Payment & Timeline Posting Instructions */}
-                    <div className="p-5 bg-[#0B0F19] border border-[#D4AF37]/50 text-left max-w-3xl mx-auto space-y-4 shadow-xl">
-                      <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
-                        <div className="text-xs font-mono uppercase tracking-wider text-[#D4AF37] flex items-center gap-2">
+                    {/* Step-by-Step Payment Instructions (Simplified 3 Steps per User Request) */}
+                    <div className="p-5 bg-white border-2 border-[#855D00]/40 text-left max-w-3xl mx-auto space-y-4 shadow-md text-slate-800">
+                      <div className="flex items-center justify-between pb-2.5 border-b border-slate-200">
+                        <div className="text-xs font-mono uppercase tracking-wider text-[#855D00] font-bold flex items-center gap-2">
                           <ShieldCheck size={16} />
-                          <span>Instruksi Pembayaran & Konfirmasi di Timeline X</span>
+                          <span>Tata Cara Pembayaran & Konfirmasi</span>
                         </div>
-                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 border border-emerald-500/30">
+                        <span className="text-[10px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 border border-emerald-300 font-bold">
                           Wajib Tag @the_BASWARA
                         </span>
                       </div>
 
                       <div className="space-y-3.5 text-xs">
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="w-6 h-6 rounded-full bg-amber-100 border border-[#855D00] text-[#855D00] font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                             1
                           </div>
                           <div>
-                            <div className="font-semibold text-white">Unduh & Simpan Invoice Resmi</div>
-                            <p className="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
-                              Klik tombol <strong className="text-[#F3E5AB]">"Unduh File JPG Invoice"</strong> di atas untuk menyimpan dokumen tagihan resmi ke galeri / penyimpanan perangkat Anda.
+                            <div className="font-bold text-slate-900">Unduh Invoice Resmi</div>
+                            <p className="text-slate-600 text-[11px] mt-0.5 leading-relaxed">
+                              Unduh file JPG invoice resmi di atas untuk disimpan sebagai dokumen tagihan Anda.
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="w-6 h-6 rounded-full bg-amber-100 border border-[#855D00] text-[#855D00] font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                             2
                           </div>
                           <div>
-                            <div className="font-semibold text-white">Transfer Bank ke Rekening Resmi Baswara</div>
-                            <p className="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
-                              Transfer total tagihan <strong>Rp {inv.initialTotalUpfront.toLocaleString('id-ID')}</strong> ke Bank Chobank: <strong className="text-[#F3E5AB]">4493 6362 5269 4576</strong> a/n PT Baswara Mangkubumi Residence. Wajib cantumkan nomor invoice <strong>{inv.invoiceNumber}</strong> pada berita transfer.
+                            <div className="font-bold text-slate-900">Transfer ke Rekening Resmi Bank Chobank</div>
+                            <p className="text-slate-600 text-[11px] mt-0.5 leading-relaxed">
+                              Transfer nominal tagihan <strong>Rp {inv.initialTotalUpfront.toLocaleString('id-ID')}</strong> ke rekening resmi Bank Chobank: <strong className="text-[#855D00] font-mono font-bold">4493 6362 5269 4576</strong> a/n PT Baswara Mangkubumi Residence. Cantumkan nomor invoice <strong>{inv.invoiceNumber}</strong> pada berita transfer.
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-400 text-emerald-400 font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="w-6 h-6 rounded-full bg-emerald-100 border border-emerald-600 text-emerald-800 font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                             3
                           </div>
                           <div>
-                            <div className="font-semibold text-white">Post Bukti Transfer di Timeline X & Tag @the_BASWARA</div>
-                            <p className="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
-                              Setelah pembayaran berhasil, unggah/post foto bukti transfer Anda di <strong>timeline akun X (Twitter)</strong> Anda dan tag/mention <strong className="text-[#F3E5AB]">@the_BASWARA</strong>.
+                            <div className="font-bold text-slate-900">Unggah Bukti Transfer & Invoice ke Timeline X</div>
+                            <p className="text-slate-600 text-[11px] mt-0.5 leading-relaxed">
+                              Unggah foto bukti transfer beserta file invoice resminya ke <strong>timeline akun X (Twitter)</strong> Anda dan tag <strong>@the_BASWARA</strong> untuk diproses serah terima kunci dan aktivasi unit hunian Anda.
                             </p>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Twitter Post Actions */}
-                      <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-                        <a
-                          href={twitterIntentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 py-2.5 px-4 bg-[#1D9BF0] hover:bg-[#1A8CD8] text-white font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                        >
-                          <Send size={14} />
-                          <span>Post Bukti Pembayaran ke @the_BASWARA</span>
-                        </a>
-
-                        <button
-                          type="button"
-                          onClick={handleCopyTweetText}
-                          className="py-2.5 px-4 border border-slate-700 hover:border-slate-500 text-slate-200 text-xs uppercase tracking-wider font-mono flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          {copiedTweet ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                          <span>{copiedTweet ? 'Format Tweet Tersalin!' : 'Salin Format Tweet'}</span>
-                        </button>
-                      </div>
-
-                      {/* Official Receipt Note */}
-                      <div className="pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 italic space-y-1">
-                        <div className="flex items-center gap-1.5 text-emerald-400 font-mono">
-                          <CheckCircle2 size={13} />
-                          <span>Kuitansi Pembayaran Resmi (LUNAS):</span>
-                        </div>
-                        <p>
-                          Kuitansi resmi berstatus <strong>LUNAS</strong> beserta stempel cap keemasan dan dokumen serah terima kunci akan otomatis diterbitkan dan diarsipkan langsung ke database manajemen setelah postingan bukti transfer Anda diverifikasi oleh tim kami. Anda tidak perlu mengunduh kuitansi tersebut secara manual.
-                        </p>
                       </div>
                     </div>
 
                     {/* Summary of Reservation Data */}
-                    <div className="p-4 bg-[#0B0F19] border border-slate-800 text-left text-xs space-y-2 max-w-3xl mx-auto shadow">
-                      <div className="text-[11px] uppercase font-mono tracking-wider text-[#D4AF37] mb-1 flex items-center justify-between pb-1.5 border-b border-slate-800">
+                    <div className="p-4 bg-white border border-slate-300 text-left text-xs space-y-2 max-w-3xl mx-auto shadow-sm">
+                      <div className="text-[11px] uppercase font-mono tracking-wider text-[#855D00] font-bold mb-1 flex items-center justify-between pb-1.5 border-b border-slate-200">
                         <div className="flex items-center gap-1.5">
                           <ScrollText size={14} />
                           <span>Ringkasan Data Formulir Calon Penghuni</span>
@@ -1450,7 +1480,7 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                         <button
                           type="button"
                           onClick={handleCopyDM}
-                          className="text-[#D4AF37] hover:underline flex items-center gap-1 text-[10px] cursor-pointer"
+                          className="text-[#855D00] hover:underline flex items-center gap-1 text-[10px] font-bold cursor-pointer"
                         >
                           <Copy size={11} />
                           <span>{copied ? 'Tersalin' : 'Salin Data'}</span>
@@ -1458,28 +1488,28 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Nama:</span>
-                          <span className="text-white font-medium">{fullName}</span>
+                          <span className="text-slate-500">Nama:</span>
+                          <span className="text-slate-900 font-bold">{fullName}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Username X:</span>
-                          <span className="text-[#D4AF37] font-mono">{normalizedUsername}</span>
+                          <span className="text-slate-500">Username X:</span>
+                          <span className="text-[#855D00] font-mono font-bold">{normalizedUsername}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Unit:</span>
-                          <span className="text-slate-200">{currentUnit.name} (Tower {currentUnit.tower})</span>
+                          <span className="text-slate-500">Unit:</span>
+                          <span className="text-slate-800 font-medium">{currentUnit.name} (Tower {currentUnit.tower})</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Status Hunian:</span>
-                          <span className="text-slate-200">{isLivingAlone ? 'Tinggal Sendiri' : `Bersama ${coTenants.length} Co-Tenant`}</span>
+                          <span className="text-slate-500">Status Hunian:</span>
+                          <span className="text-slate-800">{isLivingAlone ? 'Tinggal Sendiri' : `Bersama ${coTenants.length} Co-Tenant`}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Tanda Tangan:</span>
-                          <span className="text-[#F3E5AB] font-serif">{signatureName || fullName} (Disetujui)</span>
+                          <span className="text-slate-500">Tanda Tangan:</span>
+                          <span className="text-[#0F172A] font-serif font-bold">{signatureName || fullName} (Disetujui)</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Status KYC:</span>
-                          <span className="text-amber-400 font-mono">Menunggu Verifikasi Transfer</span>
+                          <span className="text-slate-500">Status KYC:</span>
+                          <span className="text-amber-700 font-mono font-bold">Menunggu Verifikasi Transfer</span>
                         </div>
                       </div>
                     </div>
@@ -1493,9 +1523,9 @@ Konfirmasi ditujukan ke Manajemen: @the_BASWARA / @fourgotmenot`;
                   setSheetsResult(null);
                   onClose();
                 }}
-                className="text-xs text-slate-400 hover:text-white underline pt-2 block mx-auto cursor-pointer"
+                className="text-xs text-slate-500 hover:text-slate-900 underline pt-2 block mx-auto cursor-pointer"
               >
-                Selesai & Tutup Jendela
+                Selesai &amp; Tutup Jendela
               </button>
             </div>
           )}

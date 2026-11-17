@@ -42,7 +42,12 @@ async function startServer() {
   if (!fs.existsSync(publicInvoicesPath)) {
     fs.mkdirSync(publicInvoicesPath, { recursive: true });
   }
-  app.use('/invoices', express.static(publicInvoicesPath));
+  app.use('/invoices', express.static(publicInvoicesPath, {
+    setHeaders: (res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    },
+  }));
 
   app.get('/api/admin/google-token', (_req, res) => {
     res.json({

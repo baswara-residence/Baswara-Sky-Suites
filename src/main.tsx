@@ -1,6 +1,7 @@
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
 const container = document.getElementById('root') || (() => {
@@ -12,7 +13,9 @@ const container = document.getElementById('root') || (() => {
 
 createRoot(container).render(
   <ErrorBoundary>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </ErrorBoundary>
 );
 

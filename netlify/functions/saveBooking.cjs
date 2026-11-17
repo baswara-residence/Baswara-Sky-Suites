@@ -343,6 +343,22 @@ exports.handler = async function (event, context) {
       const safeName = (data.fullName || 'Tenant').replace(/[^a-zA-Z0-9_-]/g, '_');
       const fileName = `${filenamePrefix}_${safeInvoiceNo}_${safeName}.jpg`;
 
+      // 1. Always create persistent local/server web archive fallback
+      let directWebUrl = null;
+      try {
+        const publicInvoicesDir = path.resolve(process.cwd(), 'public', 'invoices');
+        if (!fs.existsSync(publicInvoicesDir)) {
+          fs.mkdirSync(publicInvoicesDir, { recursive: true });
+        }
+        fs.writeFileSync(path.join(publicInvoicesDir, fileName), imageBuffer);
+        const reqHost = (event.headers && (event.headers['x-forwarded-host'] || event.headers.host)) || 'localhost:3000';
+        const reqProto = (event.headers && event.headers['x-forwarded-proto']) || (reqHost.includes('localhost') ? 'http' : 'https');
+        const baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || process.env.APP_URL || `${reqProto}://${reqHost}`;
+        directWebUrl = `${baseUrl.replace(/\/$/, '')}/invoices/${fileName}`;
+      } catch (saveErr) {
+        console.info('Local disk archive notice:', saveErr.message);
+      }
+
       // Method A: Check Google Apps Script Webhook (100% bypasses Service Account quota limitations)
       const targetGasUrl = appsScriptUrl || data.gasUrl;
       if (targetGasUrl) {
@@ -362,91 +378,113 @@ exports.handler = async function (event, context) {
       }
 
       // Method B: Google Drive API (supports OAuth token or Service Account)
-      try {
-        const imageStream = new Readable();
-        imageStream.push(imageBuffer);
-        imageStream.push(null);
-
-        // Upload with target folder
-        let uploadRes;
+      if (drive) {
         try {
-          uploadRes = await drive.files.create({
-            requestBody: {
-              name: fileName,
-              parents: driveFolderId ? [driveFolderId] : undefined,
-              description: docDescription,
-              mimeType: 'image/jpeg',
-            },
-            media: {
-              mimeType: 'image/jpeg',
-              body: imageStream,
-            },
-            fields: 'id, name, webViewLink, webContentLink',
-            supportsAllDrives: true,
-          });
-        } catch (folderSpecificErr) {
-          // If folder not found or permission denied on folder, attempt upload to Drive root
-          if (driveFolderId && (folderSpecificErr.code === 404 || folderSpecificErr.message?.includes('File not found') || folderSpecificErr.message?.includes('parent'))) {
-            console.warn(`Folder ${driveFolderId} not accessible, attempting root upload:`, folderSpecificErr.message);
-            const fallbackStream = new Readable();
-            fallbackStream.push(imageBuffer);
-            fallbackStream.push(null);
+          const imageStream = new Readable();
+          imageStream.push(imageBuffer);
+          imageStream.push(null);
+
+          // Upload with target folder
+          let uploadRes;
+          try {
             uploadRes = await drive.files.create({
               requestBody: {
                 name: fileName,
+                parents: driveFolderId ? [driveFolderId] : undefined,
                 description: docDescription,
                 mimeType: 'image/jpeg',
               },
               media: {
                 mimeType: 'image/jpeg',
-                body: fallbackStream,
+                body: imageStream,
               },
               fields: 'id, name, webViewLink, webContentLink',
               supportsAllDrives: true,
             });
+          } catch (folderSpecificErr) {
+            // If folder not found or permission denied on folder, attempt upload to Drive root
+            if (driveFolderId && (folderSpecificErr.code === 404 || folderSpecificErr.message?.includes('File not found') || folderSpecificErr.message?.includes('parent'))) {
+              console.warn(`Folder ${driveFolderId} not accessible, attempting root upload:`, folderSpecificErr.message);
+              const fallbackStream = new Readable();
+              fallbackStream.push(imageBuffer);
+              fallbackStream.push(null);
+              uploadRes = await drive.files.create({
+                requestBody: {
+                  name: fileName,
+                  description: docDescription,
+                  mimeType: 'image/jpeg',
+                },
+                media: {
+                  mimeType: 'image/jpeg',
+                  body: fallbackStream,
+                },
+                fields: 'id, name, webViewLink, webContentLink',
+                supportsAllDrives: true,
+              });
+            } else {
+              throw folderSpecificErr;
+            }
+          }
+
+          const fId = uploadRes.data.id;
+          let fUrl = uploadRes.data.webViewLink || `https://drive.google.com/file/d/${fId}/view`;
+
+          // Share permission
+          try {
+            await drive.permissions.create({
+              fileId: fId,
+              requestBody: {
+                role: 'reader',
+                type: 'anyone',
+              },
+              supportsAllDrives: true,
+            });
+          } catch (permErr) {
+            console.info('Permission setting info:', permErr.message);
+          }
+
+          // Share with Admin Email feel.ix.ee@gmail.com
+          try {
+            await drive.permissions.create({
+              fileId: fId,
+              requestBody: {
+                role: 'writer',
+                type: 'user',
+                emailAddress: ADMIN_EMAIL,
+              },
+              supportsAllDrives: true,
+            });
+          } catch (adminPermErr) {
+            console.info('Admin share info:', adminPermErr.message);
+          }
+
+          return { id: fId, url: fUrl, isDrive: true, source: authSource };
+        } catch (driveErr) {
+          const isQuotaNotice = driveErr.message && (
+            driveErr.message.includes('storage quota') ||
+            driveErr.message.includes('Service Accounts do not have storage quota')
+          );
+
+          if (isQuotaNotice) {
+            console.info(`[Storage Notice] Service Account has 0GB quota on personal Drive. Archiving to web storage: ${directWebUrl || fileName}`);
           } else {
-            throw folderSpecificErr;
+            console.warn(`Google Drive upload note (${filenamePrefix}):`, driveErr.message);
           }
         }
-
-        const fId = uploadRes.data.id;
-        let fUrl = uploadRes.data.webViewLink || `https://drive.google.com/file/d/${fId}/view`;
-
-        // Share permission
-        try {
-          await drive.permissions.create({
-            fileId: fId,
-            requestBody: {
-              role: 'reader',
-              type: 'anyone',
-            },
-            supportsAllDrives: true,
-          });
-        } catch (permErr) {
-          console.info('Permission setting info:', permErr.message);
-        }
-
-        // Share with Admin Email feel.ix.ee@gmail.com
-        try {
-          await drive.permissions.create({
-            fileId: fId,
-            requestBody: {
-              role: 'writer',
-              type: 'user',
-              emailAddress: ADMIN_EMAIL,
-            },
-            supportsAllDrives: true,
-          });
-        } catch (adminPermErr) {
-          console.info('Admin share info:', adminPermErr.message);
-        }
-
-        return { id: fId, url: fUrl, isDrive: true, source: authSource };
-      } catch (driveErr) {
-        console.error(`Google Drive upload error (${filenamePrefix}):`, driveErr.message);
-        driveErrors.push(`${filenamePrefix}: ${driveErr.message}`);
-        return null;
       }
+
+      // Method C: Fallback to direct web server JPG archive
+      if (directWebUrl) {
+        return {
+          id: fileName,
+          url: directWebUrl,
+          isDrive: false,
+          isLocalArchive: true,
+          source: 'Web Server Archive (Direct JPG)',
+        };
+      }
+
+      return null;
     }
 
     // A. Upload Invoice Belum Dibayar
@@ -494,22 +532,21 @@ exports.handler = async function (event, context) {
     // Kolom 18: Link Invoice Belum Lunas
     let driveInvoiceCellFormula = 'Belum diunggah';
     if (driveFileUrl) {
-      driveInvoiceCellFormula = `=HYPERLINK("${driveFileUrl}"; "Lihat Invoice JPG (Belum Dibayar)")`;
-    } else if (driveErrors.length > 0) {
-      const quotaDetected = driveErrors.some(e => e.includes('quota') || e.includes('storage'));
-      if (quotaDetected) {
-        driveInvoiceCellFormula = `=HYPERLINK("${driveFolderUrl || 'https://drive.google.com'}"; "Perlu Shared Drive / Hubungkan Admin (Kuota Service Account 0GB)")`;
-      } else {
-        driveInvoiceCellFormula = `=HYPERLINK("${driveFolderUrl || 'https://drive.google.com'}"; "Gagal Upload: Bagikan Folder ke Service Account")`;
-      }
+      const isDrive = driveFileUrl.includes('drive.google.com');
+      const label = isDrive ? `Lihat Invoice JPG (Drive - ${guaranteedInvoiceNumber})` : `Lihat Invoice JPG (${guaranteedInvoiceNumber})`;
+      driveInvoiceCellFormula = `=HYPERLINK("${driveFileUrl}"; "${label}")`;
+    } else {
+      driveInvoiceCellFormula = `=HYPERLINK("${driveFolderUrl || 'https://drive.google.com'}"; "Buka Folder Arsip")`;
     }
 
     // Kolom 19: Link Kuitansi Lunas
     let driveReceiptCellFormula = 'Otomatis Diterbitkan Saat Lunas';
     if (receiptFileUrl) {
-      driveReceiptCellFormula = `=HYPERLINK("${receiptFileUrl}"; "Lihat Kuitansi Pelunasan (Lunas)")`;
-    } else if (driveErrors.length > 0) {
-      driveReceiptCellFormula = `=HYPERLINK("${driveFolderUrl || 'https://drive.google.com'}"; "Arsip Kuitansi Tertunda")`;
+      const isDrive = receiptFileUrl.includes('drive.google.com');
+      const label = isDrive ? `Lihat Kuitansi Pelunasan (Drive - ${guaranteedReceiptNumber})` : `Lihat Kuitansi Pelunasan (${guaranteedReceiptNumber})`;
+      driveReceiptCellFormula = `=HYPERLINK("${receiptFileUrl}"; "${label}")`;
+    } else {
+      driveReceiptCellFormula = `=HYPERLINK("${driveFolderUrl || 'https://drive.google.com'}"; "Buka Folder Arsip")`;
     }
 
     const rulesSignatureInfo = data.rulesAgreed
